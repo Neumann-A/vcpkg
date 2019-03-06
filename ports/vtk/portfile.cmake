@@ -51,9 +51,6 @@ vcpkg_from_github(
     SHA512 fd1d9c2872baa6eca7f8105b0057b56ec554e9d5eaf25985302e7fc032bdce72255d79e3f5f16ca50504151bda49cb3a148272ba32e0f410b4bdb70959b8f3f4
     HEAD_REF "master"
     PATCHES
-        # Disable ssize_t because this can conflict with ssize_t that is defined on windows.
-        dont-define-ssize_t.patch
-
         # We force CMake to use it's own version of the FindHDF5 module since newer versions
         # shipped with CMake behave differently. E.g. the one shipped with CMake 3.9 always
         # only finds the release libraries, but not the debug libraries.
@@ -61,16 +58,12 @@ vcpkg_from_github(
         # Maybe in the future we can disable the patch and use the new version shipped with CMake
         # together with the hdf5-config.cmake that is written by HDF5 itself, but currently VTK
         # disables taking the config into account explicitly.
-        use-fixed-find-hdf5.patch
+        #use-fixed-find-hdf5.patch
 
         # We disable a workaround in the VTK CMake scripts that can lead to the fact that a dependency
         # will link to both, the debug and the release library.
-        disable-workaround-findhdf5.patch
+        #disable-workaround-findhdf5.patch
 
-        fix-find-libproj4.patch
-        fix-find-libharu.patch
-        fix-find-mysql.patch
-        fix-find-odbc.patch
         fix-find-lz4.patch
 )
 
@@ -82,7 +75,7 @@ vcpkg_from_github(
 file(REMOVE ${SOURCE_PATH}/CMake/FindGLEW.cmake)
 file(REMOVE ${SOURCE_PATH}/CMake/FindPythonLibs.cmake)
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/FindGDAL.cmake DESTINATION ${SOURCE_PATH}/CMake)
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/FindHDF5.cmake DESTINATION ${SOURCE_PATH}/CMake/NewCMake)
+#file(COPY ${CMAKE_CURRENT_LIST_DIR}/FindHDF5.cmake DESTINATION ${SOURCE_PATH}/CMake/NewCMake)
 
 # =============================================================================
 # Collect CMake options for optional components
@@ -135,13 +128,14 @@ if(VTK_WITH_ALL_MODULES)
         # -DVTK_USE_SYSTEM_ZOPE=ON
     )
 endif()
-
+#H5_BUILT_AS_DYNAMIC_LIB
 # =============================================================================
 # Configure & Install
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA
     OPTIONS
+        -DHAVE_SNPRINTF=ON
         -DVTK_Group_Imaging=ON
         -DVTK_Group_Views=ON
         -DBUILD_TESTING=OFF
