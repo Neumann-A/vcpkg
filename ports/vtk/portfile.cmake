@@ -147,12 +147,13 @@ vcpkg_configure_cmake(
         -DVTK_USE_SYSTEM_GLEW=ON
         -DVTK_USE_SYSTEM_HDF5=ON
         -DVTK_USE_SYSTEM_JSONCPP=ON
-        -DVTK_USE_SYSTEM_LIBPROJ4=ON
+        -DVTK_USE_SYSTEM_LIBPROJ=ON
         -DVTK_USE_SYSTEM_LIBXML2=ON
         -DVTK_USE_SYSTEM_LZ4=ON
         # -DVTK_USE_SYSTEM_NETCDF=ON
         # -DVTK_USE_SYSTEM_NETCDFCPP=ON
-        -DVTK_USE_SYSTEM_OGGTHEORA=ON
+        # -DVTK_USE_SYSTEM_OGG=ON ?
+        -DVTK_USE_SYSTEM_THEORA=ON
         -DVTK_USE_SYSTEM_PNG=ON
         -DVTK_USE_SYSTEM_TIFF=ON
         -DVTK_USE_SYSTEM_ZLIB=ON
@@ -254,10 +255,10 @@ set(SYSTEM_THIRD_PARTY_MODULES
     vtkglew
     vtkhdf5
     vtkjsoncpp
-    vtklibproj4
+    vtklibproj
     vtklibxml2
     vtklz4
-    vtkoggtheora
+    vtktheora
     vtkpng
     vtktiff
     vtkzlib
