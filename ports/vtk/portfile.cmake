@@ -4,7 +4,7 @@ endif()
 
 include(vcpkg_common_functions)
 
-set(VTK_SHORT_VERSION "8.1")
+set(VTK_SHORT_VERSION "8.2")
 set(VTK_LONG_VERSION "${VTK_SHORT_VERSION}.0")
 # =============================================================================
 # Options:
@@ -48,7 +48,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO "Kitware/VTK"
     REF "v${VTK_LONG_VERSION}"
-    SHA512 09e110cba4ad9a6684e9b2af0cbb5b9053e3596ccb62aab96cd9e71aa4a96c809d96e13153ff44c28ad83015a61ba5195f7d34056707b62654c1bc057f9b9edf
+    SHA512 fd1d9c2872baa6eca7f8105b0057b56ec554e9d5eaf25985302e7fc032bdce72255d79e3f5f16ca50504151bda49cb3a148272ba32e0f410b4bdb70959b8f3f4
     HEAD_REF "master"
     PATCHES
         # Disable ssize_t because this can conflict with ssize_t that is defined on windows.
