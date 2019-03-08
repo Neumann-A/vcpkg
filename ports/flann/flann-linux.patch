@@ -7,9 +7,7 @@ index e6c8ae06..c15a8e90 100644
  
      if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_COMPILER_IS_GNUCC)
 -        add_library(flann SHARED "")
-+        add_library(flann ALIAS flann_s)
--         set_target_properties(flann PROPERTIES LINKER_LANGUAGE CXX)
--         target_link_libraries(flann -Wl,-whole-archive flann_s -Wl,-no-whole-archive)
-+         #set_target_properties(flann PROPERTIES LINKER_LANGUAGE CXX)
-+         #target_link_libraries(flann -Wl,-whole-archive flann_s -Wl,-no-whole-archive)
++        add_library(flann SHARED ${C_SOURCES})
+         set_target_properties(flann PROPERTIES LINKER_LANGUAGE CXX)
+         target_link_libraries(flann -Wl,-whole-archive flann_s -Wl,-no-whole-archive)
      else()
