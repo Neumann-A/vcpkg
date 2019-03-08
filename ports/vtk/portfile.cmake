@@ -129,13 +129,18 @@ if(VTK_WITH_ALL_MODULES)
         # -DVTK_USE_SYSTEM_ZOPE=ON
     )
 endif()
-#H5_BUILT_AS_DYNAMIC_LIB
+
 # =============================================================================
 # Configure & Install
+if(${VCPKG_LIBRARY_LINKAGE} MATCHES "static")
+    set(HDF5_USE_STATIC_LIBRARIES ON)
+endif()
+
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA
     OPTIONS
+        -DHDF5_USE_STATIC_LIBRARIES=${HDF5_USE_STATIC_LIBRARIES}
         -DHAVE_SNPRINTF=ON
         -DVTK_Group_Imaging=ON
         -DVTK_Group_Views=ON
