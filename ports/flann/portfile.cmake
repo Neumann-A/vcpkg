@@ -9,6 +9,7 @@ vcpkg_from_github(
     PATCHES
         export-all-symbols-of-flann-cpp.patch
         no-write-src-dir.patch
+        flann-linux.patch
 )
 
 vcpkg_configure_cmake(
