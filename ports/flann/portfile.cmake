@@ -18,6 +18,7 @@ vcpkg_configure_cmake(
     PREFER_NINJA
     OPTIONS
         -DBUILD_EXAMPLES=OFF
+        -DBUILD_TESTS=OFF
         -DBUILD_DOC=OFF
         -DBUILD_PYTHON_BINDINGS=OFF
         -DBUILD_MATLAB_BINDINGS=OFF
