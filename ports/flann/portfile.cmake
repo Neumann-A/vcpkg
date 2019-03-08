@@ -7,8 +7,6 @@ vcpkg_from_github(
     SHA512 0da78bb14111013318160dd3dee1f93eb6ed077b18439fd6496017b62a8a6070cc859cfb3e08dad4c614e48d9dc1da5f7c4a21726ee45896d360506da074a6f7
     HEAD_REF master
     PATCHES
-        fix-install-flann.patch
-        Revert-fix-install-flann.patch
         export-all-symbols-of-flann-cpp.patch
         no-write-src-dir.patch
 )
