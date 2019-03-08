@@ -28,7 +28,9 @@ vcpkg_install_cmake()
 vcpkg_fixup_cmake_targets(CONFIG_PATH share/HighFive/CMake)
 
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug)
-file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/share/HighFive)
+if(NOT WIN32)
+  file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/share/HighFive)
+endif()
 
 # Handle copyright
 file(INSTALL ${SOURCE_PATH}/LICENSE DESTINATION ${CURRENT_PACKAGES_DIR}/share/highfive RENAME copyright)
