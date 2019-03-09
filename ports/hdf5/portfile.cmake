@@ -3,13 +3,22 @@ if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 endif()
 
 include(vcpkg_common_functions)
-set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/CMake-hdf5-1.10.5/hdf5-1.10.5)
+#set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/CMake-hdf5-1.10.5/hdf5-1.10.5)
 vcpkg_download_distfile(ARCHIVE
     URLS "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/CMake-hdf5-1.10.5.tar.gz"
     FILENAME "CMake-hdf5-1.10.5.tar.gz"
     SHA512  a25ea28d7a511f9184d97b5b8cd4c6d52dcdcad2bffd670e24a1c9a6f98b03108014a853553fa2b00d4be7523128b5fd6a4454545e3b17ff8c66fea16a09e962
 )
 vcpkg_extract_source_archive(${ARCHIVE})
+
+vcpkg_extract_source_archive_ex(
+    OUT_SOURCE_PATH SOURCE_PATH
+    ARCHIVE ${ARCHIVE}
+    REF hdf5
+    PATCHES
+        hdf5_config.patch
+)
+set(SOURCE_PATH ${SOURCE_PATH}/hdf5-1.10.5)
 
 if ("parallel" IN_LIST FEATURES)
     set(ENABLE_PARALLEL ON)
@@ -51,14 +60,14 @@ file(RENAME ${CURRENT_PACKAGES_DIR}/share/hdf5/data/COPYING ${CURRENT_PACKAGES_D
 vcpkg_fixup_cmake_targets(CONFIG_PATH share/hdf5)
 
 # Fix static szip link
-file(READ ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake HDF5_TARGETS_DATA)
+#file(READ ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake HDF5_TARGETS_DATA)
 # Fix szip linkage
-STRING(REPLACE LINK_ONLY:szip-static [[LINK_ONLY:${_IMPORT_PREFIX}/$<$<CONFIG:Debug>:debug/>lib/libszip$<$<CONFIG:Debug>:_D>${CMAKE_STATIC_LIBRARY_SUFFIX}]] HDF5_TARGETS_NEW "${HDF5_TARGETS_DATA}")
+#STRING(REPLACE LINK_ONLY:szip-static [[LINK_ONLY:${_IMPORT_PREFIX}/$<$<CONFIG:Debug>:debug/>lib/libszip$<$<CONFIG:Debug>:_D>${CMAKE_STATIC_LIBRARY_SUFFIX}]] HDF5_TARGETS_NEW "${HDF5_TARGETS_DATA}")
 # Fix zlib linkage
 #STRING(REPLACE "lib/zlib" [[$<$<CONFIG:Debug>:debug/>lib/zlib$<$<CONFIG:Debug>:d>]] HDF5_TARGETS_NEW "${HDF5_TARGETS_NEW}")
 
 #write everything to file
-file(WRITE ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake "${HDF5_TARGETS_NEW}")
+#file(WRITE ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake "${HDF5_TARGETS_NEW}")
 
 #Linux build create additional scripts here. I dont know what they are doing so I am deleting them and hope for the best 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL static)
