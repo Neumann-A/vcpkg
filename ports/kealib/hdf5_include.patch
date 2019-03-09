@@ -1,0 +1,62 @@
+index 1f4b1474..40a0f55d 100644
+--- a/trunk/include/libkea/KEAAttributeTable.h
++++ b/trunk/include/libkea/KEAAttributeTable.h
+@@ -37,7 +37,7 @@
+ #include <map>
+ #include <math.h>
+ 
+-#include "H5Cpp.h"
++#include <H5Cpp.h>
+ 
+ #include "libkea/KEACommon.h"
+ #include "libkea/KEAException.h"
+
+--- a/trunk/include/libkea/KEAAttributeTableFile.h
++++ b/trunk/include/libkea/KEAAttributeTableFile.h
+@@ -35,7 +35,7 @@
+ #include <string>
+ #include <vector>
+ 
+-#include "H5Cpp.h"
++#include <H5Cpp.h>
+ 
+ #include "libkea/KEACommon.h"
+ #include "libkea/KEAException.h"
+
+--- a/trunk/include/libkea/KEACommon.h
++++ b/trunk/include/libkea/KEACommon.h
+@@ -36,7 +36,7 @@
+ #include <string>
+ #include <vector>
+ 
+-#include "H5Cpp.h"
++#include <H5Cpp.h>
+ 
+ // mark all exported classes/functions with DllExport to have
+ // them exported by Visual Studio
+
+--- a/trunk/include/libkea/KEAAttributeTableInMem.h
++++ b/trunk/include/libkea/KEAAttributeTableInMem.h
+@@ -35,7 +35,7 @@
+ #include <string>
+ #include <vector>
+ 
+-#include "H5Cpp.h"
++#include <H5Cpp.h>
+ 
+ #include "libkea/KEACommon.h"
+ #include "libkea/KEAException.h"
+
+--- a/trunk/include/libkea/KEAImageIO.h
++++ b/trunk/include/libkea/KEAImageIO.h
+@@ -35,7 +35,7 @@
+ #include <string>
+ #include <vector>
+ 
+-#include "H5Cpp.h"
++#include <H5Cpp.h>
+ 
+ #include "libkea/KEACommon.h"
+ #include "libkea/KEAException.h"
+
+

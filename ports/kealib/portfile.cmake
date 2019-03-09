@@ -10,7 +10,8 @@ vcpkg_extract_source_archive(${ARCHIVE})
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
     PATCHES
-        ${CMAKE_CURRENT_LIST_DIR}/fix-cmake.patch
+        fix-cmake.patch
+        hdf5_include.patch
 )
 
 if ("parallel" IN_LIST FEATURES)
