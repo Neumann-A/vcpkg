@@ -54,7 +54,7 @@ index 464fb13..dc8e26f 100644
  endif(MSVC)
  
  if (MSVC)
-@@ -160,21 +153,19 @@ endif(MSVC)
+@@ -160,21 +153,20 @@ endif(MSVC)
  
  ###############################################################################
  # Setup configure file
@@ -74,7 +74,7 @@ index 464fb13..dc8e26f 100644
  # Build library
  
  include_directories ("${PROJECT_HEADER_DIR}")
--include_directories(${HDF5_INCLUDE_DIR})
+ include_directories(${HDF5_INCLUDE_DIR})
 +include_directories ("${CMAKE_BINARY_DIR}/${PROJECT_HEADER_DIR}")
  add_subdirectory ("${PROJECT_SOURCE_DIR}")
  if (LIBKEA_WITH_GDAL)
