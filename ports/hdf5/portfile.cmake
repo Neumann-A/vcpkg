@@ -40,7 +40,7 @@ vcpkg_configure_cmake(
         -DHDF5_ENABLE_SZIP_SUPPORT=ON
         -DHDF5_ENABLE_SZIP_ENCODING=ON
         -DHDF5_INSTALL_DATA_DIR=share/hdf5/data
-        -DHDF5_INSTALL_CMAKE_DIR=share/
+        -DHDF5_INSTALL_CMAKE_DIR=share
 )
 
 vcpkg_install_cmake()
@@ -55,7 +55,7 @@ file(READ ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake HDF5_TARGETS_DAT
 # Fix szip linkage
 STRING(REPLACE LINK_ONLY:szip-static [[LINK_ONLY:${_IMPORT_PREFIX}/$<$<CONFIG:Debug>:debug/>lib/libszip$<$<CONFIG:Debug>:_D>${CMAKE_STATIC_LIBRARY_SUFFIX}]] HDF5_TARGETS_NEW "${HDF5_TARGETS_DATA}")
 # Fix zlib linkage
-STRING(REPLACE "lib/zlib" [[$<$<CONFIG:Debug>:debug/>lib/zlib$<$<CONFIG:Debug>:d>]] HDF5_TARGETS_NEW "${HDF5_TARGETS_NEW}")
+#STRING(REPLACE "lib/zlib" [[$<$<CONFIG:Debug>:debug/>lib/zlib$<$<CONFIG:Debug>:d>]] HDF5_TARGETS_NEW "${HDF5_TARGETS_NEW}")
 
 #write everything to file
 file(WRITE ${CURRENT_PACKAGES_DIR}/share/hdf5/hdf5-targets.cmake "${HDF5_TARGETS_NEW}")
