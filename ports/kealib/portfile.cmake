@@ -1,16 +1,15 @@
 include(vcpkg_common_functions)
-set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/kealib-1.4.7)
+set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/kealib-1.4.9)
 vcpkg_download_distfile(ARCHIVE
-    URLS "https://bitbucket.org/chchrsc/kealib/downloads/kealib-1.4.7.tar.gz"
-    FILENAME "kealib-1.4.7.tar.gz"
-    SHA512 2d58d7d08943d028e19a24f3ad3316a13b4db59be8697cebf30ee621e6bf0a6a47bf61abadd972d6ea7af1c8eed28bba7edf40fb8709fcccc1effbc90ae6e244
+    URLS "https://bitbucket.org/chchrsc/kealib/downloads/kealib-1.4.9.tar.gz"
+    FILENAME "kealib-1.4.9.tar.gz"
+    SHA512 85e5cae3daf3fbee100d437a4de71f98e1d15a93e6e316952948888cbc6047265e167725a6e170ba1fd919c02b7da4189a7c418faeefcdb0c802e1fbd9628276
 )
 vcpkg_extract_source_archive(${ARCHIVE})
 
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
     PATCHES
-        fix-cmake.patch
         hdf5_include.patch
 )
 
@@ -25,7 +24,7 @@ if(${VCPKG_LIBRARY_LINKAGE} MATCHES "static")
 endif()
 
 vcpkg_configure_cmake(
-    SOURCE_PATH ${SOURCE_PATH}/trunk
+    SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA
     OPTIONS
       -DHDF5_PREFER_PARALLEL=${ENABLE_PARALLEL}
@@ -38,7 +37,7 @@ vcpkg_install_cmake()
 vcpkg_copy_pdbs()
 
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
-file(INSTALL ${SOURCE_PATH}/trunk/python/LICENSE.txt DESTINATION ${CURRENT_PACKAGES_DIR}/share/kealib RENAME copyright)
+file(INSTALL ${SOURCE_PATH}/python/LICENSE.txt DESTINATION ${CURRENT_PACKAGES_DIR}/share/kealib RENAME copyright)
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/bin ${CURRENT_PACKAGES_DIR}/bin)
