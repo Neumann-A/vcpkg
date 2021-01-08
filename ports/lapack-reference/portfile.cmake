@@ -11,16 +11,15 @@ endif()
 include(vcpkg_find_fortran)
 SET(VCPKG_POLICY_EMPTY_INCLUDE_FOLDER enabled)
 
-set(lapack_ver 3.10.1)
+set(lapack_ver 3.9.0)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO  "Reference-LAPACK/lapack"
     REF "v${lapack_ver}"
-    SHA512 0500bbbb48483208c0a35b74972ff0059c389da6032824a2079637266a99fa980882eedf7f1fc490219ee4ff27812ac8c6afe118e25f40a9c2387e7b997762fb
+    SHA512 424956ad941a60a4b71e0d451ad48db12a692f8a71a90f3ca7f71d6ecc1922f392746ea84df1c47a46577ed2db32e9e47ec44ad248207c5ac7da179becb712ef
     HEAD_REF master
-    PATCHES
-        lapacke.patch
+    PATCHES 4c09cda6943f3c893fb20ed6a490e1ba485148dd.patch
 )
 
 if(NOT VCPKG_TARGET_IS_WINDOWS)
@@ -62,18 +61,18 @@ if(VCPKG_USE_INTERNAL_Fortran)
 else()
     set(USE_OPTIMIZED_BLAS ON)
 endif()
+vcpkg_configure_cmake(
+        PREFER_NINJA
+        SOURCE_PATH ${SOURCE_PATH}
+        OPTIONS
+            "-DUSE_OPTIMIZED_BLAS=${USE_OPTIMIZED_BLAS}"
+            "-DBLA_VENDOR=OpenBLAS"
+            "-DCBLAS=${CBLAS}"
+            ${FORTRAN_CMAKE}
+        )
 
-vcpkg_cmake_configure(
-    SOURCE_PATH "${SOURCE_PATH}"
-    OPTIONS
-        "-DUSE_OPTIMIZED_BLAS=${USE_OPTIMIZED_BLAS}"
-        "-DCBLAS=${CBLAS}"
-        ${FORTRAN_CMAKE}
-)
-
-vcpkg_cmake_install()
-
-vcpkg_cmake_config_fixup(PACKAGE_NAME lapack-${lapack_ver} CONFIG_PATH lib/cmake/lapack-${lapack_ver}) #Should the target path be lapack and not lapack-reference?
+vcpkg_install_cmake()
+vcpkg_fixup_cmake_targets(CONFIG_PATH lib/cmake/lapack-${lapack_ver}) #Should the target path be lapack and not lapack-reference?
 
 set(pcfile "${CURRENT_PACKAGES_DIR}/lib/pkgconfig/lapack.pc")
 if(EXISTS "${pcfile}")
@@ -87,7 +86,7 @@ if(EXISTS "${pcfile}")
     set(_contents "prefix=${CURRENT_INSTALLED_DIR}/debug\n${_contents}")
     file(WRITE "${pcfile}" "${_contents}")
 endif()
-if(NOT USE_OPTIMIZED_BLAS AND NOT (VCPKG_TARGET_IS_WINDOWS AND VCPKG_LIBRARY_LINKAGE STREQUAL "static"))
+if(NOT USE_OPTIMIZED_BLAS)
     set(pcfile "${CURRENT_PACKAGES_DIR}/lib/pkgconfig/blas.pc")
     if(EXISTS "${pcfile}")
         file(READ "${pcfile}" _contents)
@@ -140,5 +139,7 @@ if(VCPKG_TARGET_IS_WINDOWS)
     endif()
 endif()
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/lapack)
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/FindLAPACK.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/lapack)
+if(NOT VCPKG_TARGET_IS_WINDOWS)
+    file(COPY ${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/lapack)
+    file(COPY ${CMAKE_CURRENT_LIST_DIR}/FindLAPACK.cmake DESTINATION ${CURRENT_PACKAGES_DIR}/share/lapack)
+endif()
