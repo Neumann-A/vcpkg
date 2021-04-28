@@ -2,3 +2,4 @@ Source: boost-build
 Version: 1.72.0
 Homepage: https://github.com/boostorg/build
 Description: Boost.Build
+Build-Depends: bzip2, zlib, zstd, liblzma

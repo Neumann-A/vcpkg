@@ -4,25 +4,12 @@ constant BOOST_JAMROOT_MODULE : $(__name__) ;
 path-constant BOOST_ROOT : "@CURRENT_INSTALLED_DIR@" ;
 
 import boostcpp ;
-import link ;
 boostcpp.set-version $(BOOST_VERSION) ;
 
 import feature ;
-import tools/boost_install/boost-install ;
+import "@CURRENT_INSTALLED_DIR@/share/boost\_install/boost-install" ;
 
-local all-headers =
-    [ MATCH boost-(.*) : "@PORT@" ] ;
 
-for dir in $(all-headers)
-{
-    link-directory $(dir)-headers : include/boost : <location>. ;
-    explicit $(dir)-headers ;
-}
-
-if $(all-headers)
-{
-    constant BOOST_MODULARLAYOUT : $(all-headers) ;
-}
 
 rule handle-static-runtime ( properties * )
 {
@@ -46,7 +33,7 @@ rule handle-static-runtime ( properties * )
     }
 }
 
-project boost : requirements <implicit-dependency>/boost//include
+project boost : requirements
     <include>include&&"@CURRENT_INSTALLED_DIR@/include"
     <define>BOOST_ALL_NO_LIB=1
     <tag>@$(__name__).tag

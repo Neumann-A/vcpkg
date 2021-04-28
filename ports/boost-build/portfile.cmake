@@ -8,13 +8,13 @@ elseif(CMAKE_HOST_WIN32 AND VCPKG_CMAKE_SYSTEM_NAME AND NOT VCPKG_CMAKE_SYSTEM_N
     return()
 endif()
 
-set(BOOST_VERSION 1.72.0)
+set(BOOST_VERSION 1.73.0)
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO boostorg/build
     REF boost-${BOOST_VERSION}
-    SHA512 744816ba805013a49029373a4d2aa5b5f543275a1cdef2812c2120c868c55bf36a0bb0fb891cd955ad7319e582fd5212bd52ff071703a8654b345c478e810a19
+    SHA512 68e132c480c3063f99ddae48177ff5a35369e49e7f497d51d758a9bf760c5b20c1c040cb212fad94b1f27fb140054b0ef14ac0b32c6d7d246e921787ff58a037
     HEAD_REF master
 )
 
@@ -27,7 +27,7 @@ vcpkg_download_distfile(LICENSE
 vcpkg_download_distfile(BOOSTCPP_ARCHIVE
     URLS "https://raw.githubusercontent.com/boostorg/boost/boost-${BOOST_VERSION}/boostcpp.jam"
     FILENAME "boost-${BOOST_VERSION}-boostcpp.jam"
-    SHA512 7fac16c1f082821dd52cae39601f60bbdbd5ce043fbd19699da54c74fc5df1ed2ad6d3cefd3ae9a0a7697a2c34737f0c9e2b4bd3590c1f45364254875289cd17
+    SHA512 8cf929fa4a602342c859a6bbd5f9dda783ac29431d951bcf6cae4cb14377c1b3aed90bacd902b0f7d1807591cf5e1a244cf8fc3c6cc6e0a4056db145b58f51df
 )
 
 file(INSTALL ${LICENSE} DESTINATION "${CURRENT_PACKAGES_DIR}/share/boost-build" RENAME copyright)
@@ -75,6 +75,9 @@ else()
     endif()
 endif()
 
+#vcpkg_find_acquire_program(BISON)
+#get_filename_component(BISON_DIR "${BISON}" DIRECTORY)
+#vcpkg_add_to_path("${BISON_DIR}")
 
 file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}" INSTALL_PREFIX_PATH )
 file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}/tools/${PORT}" INSTALL_TOOLS_PATH )
@@ -94,7 +97,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_BOOST_INSTALL
     REPO boostorg/boost_install
     REF boost-${BOOST_VERSION}
-    SHA512 0c3b319d0828df2dfafd60c02c8d0b4a349c0843162f02735954a2e586e846ce76b1ccca0c7d05669486f0f37bd0740fee66c8f74461ef6ff397cb0832dff886
+    SHA512 11f3f54fca305563f965be38d36f5d72417a4d5011fba01134b768006f0ff3d458d952a72ce8faff159c6209c977fc1ecdb05157a2d0c6020748db379970b8de
     HEAD_REF master
 )
 #set(CURRENT_INSTALLED_DIR_BACKUP "${CURRENT_INSTALLED_DIR}")
@@ -113,15 +116,31 @@ file(RENAME "${CURRENT_PACKAGES_DIR}/share/boost_install/BoostConfig.cmake" "${C
 file(RENAME "${CURRENT_PACKAGES_DIR}/share/boost_install/BoostDetectToolset.cmake" "${CURRENT_PACKAGES_DIR}/share/boost/BoostDetectToolset.cmake")
 file(RENAME "${CURRENT_PACKAGES_DIR}/share/boost_install/test/BoostVersion.cmake" "${CURRENT_PACKAGES_DIR}/share/boost/BoostVersion.cmake")
 
+
 file(
     COPY
         "${CMAKE_CURRENT_LIST_DIR}/modular/boost-modular-build.cmake"
+        "${CMAKE_CURRENT_LIST_DIR}/modular/Jamfile.headers.in"
         "${CMAKE_CURRENT_LIST_DIR}/modular/Jamroot.jam.in"
         "${CMAKE_CURRENT_LIST_DIR}/modular/user-config.jam.in"
         "${CMAKE_CURRENT_LIST_DIR}/modular/nothing.bat"
         "${CMAKE_CURRENT_LIST_DIR}/modular/CMakeLists.txt"
     DESTINATION
         "${CURRENT_PACKAGES_DIR}/share/boost-build"
+)
+
+
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_BOOST_HEADERS
+    REPO boostorg/headers
+    REF boost-${BOOST_VERSION}
+    SHA512 7f60cd03dc147b950103095f4ba150343813b61a94076a09c08ab22607d6da897cb643aba0ad3918c0b79f7c10dd63ccf145e6fde29f441836f22af531b501a4
+    HEAD_REF master
+)
+
+file(COPY
+    ${SOURCE_BOOST_HEADERS}/
+    DESTINATION ${CURRENT_PACKAGES_DIR}/share/boost_build_headers/
 )
 
 # vcpkg_execute_required_process(

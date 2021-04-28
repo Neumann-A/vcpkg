@@ -1,0 +1,1221 @@
+diff --git a/./modular/CMakeLists.txt b/../boost-modular-build-helper/CMakeLists.txt
+index cd5f46115..d0d468daf 100644
+--- a/./modular/CMakeLists.txt
++++ b/../boost-modular-build-helper/CMakeLists.txt
+@@ -1,139 +1,263 @@
+-cmake_minimum_required(VERSION 3.9)
+-project(boost CXX)
++cmake_minimum_required(VERSION 3.14)
++project(boost LANGUAGES C CXX ASM_MASM)
+ 
+-find_path(ZLIB_INCLUDE zlib.h)
+-find_path(BZIP2_INCLUDE bzlib.h)
+-find_path(ICU_PATH include/unicode/utf.h)
++# Create a b2 project config based on CMake toolchain settings.
++set(config "TOOLSET_SETTINGS")
++set(${config} "")
++if(WIN32)
++  if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
++    string(APPEND ${config} "using clang-win : ${CMAKE_CXX_COMPILER_VERSION} : ")
++  elseif(MSVC)
++    string(REGEX REPLACE "^([0-9]*)([0-9])$" "\\1.\\2" toolset_version "${MSVC_TOOLSET_VERSION}")
++    string(APPEND ${config} "using msvc : ${toolset_version} : ")
++  elseif(CMAKE_CXX_COMPILER_ID STREQUAL Intel)
++    message(FATAL_ERROR "Intel compiler currently not supported by boost within vcpkg!")
++  else()
++    string(APPEND ${config} "using gcc : ${CMAKE_CXX_COMPILER_VERSION} : ")
++  endif()
++else()
++  if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
++    string(APPEND ${config} "using clang-linux : ${CMAKE_CXX_COMPILER_VERSION} : ")
++  else()
++    string(APPEND ${config} "using gcc : ${CMAKE_CXX_COMPILER_VERSION} : ")
++  endif()
++endif()
+ 
+-set(VCPKG_PLATFORM_TOOLSET external)
++string(APPEND ${config} "\"${CMAKE_CXX_COMPILER}\" :\n")
++if(WIN32)
++    file(TO_CMAKE_PATH "${BOOST_BUILD_DIR}/nothing.bat" NOTHING_BAT)
++    string(APPEND ${config} "<setup>\"${NOTHING_BAT}\"")
++elseif(MINGW)
++    string(APPEND ${config} "<flavor>mingw")
++endif()
++string(APPEND ${config} "\n")
+ 
+-set(B2_OPTIONS)
++function(append name value)
++  string(REPLACE "\"" "\\\"" quoted_value "${value}")
++  string(APPEND ${config} "${name}\"${quoted_value}\"\n")
++endfunction()
+ 
+-if(DEFINED BOOST_CMAKE_FRAGMENT)
+-    include(${BOOST_CMAKE_FRAGMENT})
++if(WIN32 AND DEFINED CMAKE_LINKER)
++  append("<linker>" "\"${CMAKE_LINKER}\"")
++  string(APPEND ${config} "\n")
++endif()
++if(DEFINED CMAKE_RANLIB)
++    append("<ranlib>" "${CMAKE_RANLIB}\n")
++endif()
++if(DEFINED CMAKE_AR)
++    append("<archiver>" "${CMAKE_AR}\n")
+ endif()
++append("<cflags>" "${CMAKE_C_FLAGS}")
++append("<variant>debug:<cflags>" "${CMAKE_C_FLAGS_DEBUG}")
++append("<variant>release:<cflags>" "${CMAKE_C_FLAGS_RELEASE}")
++string(APPEND ${config} "\n")
+ 
+-# Add build type specific options
+-if(BUILD_SHARED_LIBS)
+-    list(APPEND B2_OPTIONS runtime-link=shared)
+-    set(LIB_RUNTIME_LINK "shared")
+-else()
+-    list(APPEND B2_OPTIONS runtime-link=static)
+-    set(LIB_RUNTIME_LINK "static")
++if(CMAKE_CXX_STANDARD)
++  if(CMAKE_CXX_STANDARD STREQUAL 98)
++    append("<cxxstd>" "98")
++  elseif(CMAKE_CXX_STANDARD STREQUAL 11)
++    append("<cxxstd>" "11")
++  elseif(CMAKE_CXX_STANDARD STREQUAL 14)
++    append("<cxxstd>" "14")
++  elseif(CMAKE_CXX_STANDARD STREQUAL 17)
++    append("<cxxstd>" "17")
++  else()
++    append("<cxxstd>" "latest")
++    # TODO: Add boost version check when asio fixes this.
++    append("<cxxflags>" "-DBOOST_ASIO_DISABLE_CONCEPTS")
++  endif()
++  if(NOT CMAKE_CXX_EXTENSIONS)
++    append("<cxxstd-dialect>" "iso")
++  endif()
+ endif()
++append("<cxxflags>" "${CMAKE_CXX_FLAGS}")
++append("<variant>debug:<cxxflags>" "${CMAKE_CXX_FLAGS_DEBUG}")
++append("<variant>release:<cxxflags>" "${CMAKE_CXX_FLAGS_RELEASE}")
++string(APPEND ${config} "\n")
+ 
+ if(BUILD_SHARED_LIBS)
+-    list(APPEND B2_OPTIONS link=shared)
++  append("<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS}")
++  append("<variant>debug:<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
++  append("<variant>release:<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
+ else()
+-    list(APPEND B2_OPTIONS link=static)
++  append("<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS}")
++  append("<variant>debug:<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS_DEBUG}")
++  append("<variant>release:<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS_RELEASE}")
+ endif()
++string(APPEND ${config} "\n")
++
++get_property(COMPILE_DEFINITIONS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
++foreach(define ${COMPILE_DEFINITIONS})
++  string(APPEND ${config} "<define>${define}\n")
++endforeach()
++
++if(CMAKE_SYSTEM_NAME MATCHES "WindowsStore" AND MSVC)
++    # set(TOOLSET_OPTIONS " <cxxflags>/EHsc <compileflags>-Zm800 <compileflags>-nologo")
++    # if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
++        if(NOT VCPKG_PLATFORM_TOOLSET MATCHES "v140")
++            find_path(PATH_TO_CL cl.exe)
++            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "${PATH_TO_CL}/../../../lib/x86/store/references" NO_DEFAULT_PATH)
++            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
++                message(FATAL_ERROR "Could not find `platform.winmd` in VS. Do you have the Universal Windows Platform development workload installed?")
++            endif()
++        else()
++            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "$ENV{VS140COMNTOOLS}/../../VC/LIB/store/references")
++            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
++                message(FATAL_ERROR "Could not find `platform.winmd` in VS2015.")
++            endif()
++        endif()
++        file(TO_NATIVE_PATH "${PLATFORM_WINMD_DIR}" PLATFORM_WINMD_DIR)
++        string(REPLACE "\\" "/" PLATFORM_WINMD_DIR ${PLATFORM_WINMD_DIR}) # escape backslashes
++        string(APPEND ${config} "<cflags>-Zl <compileflags> /AI\"${PLATFORM_WINMD_DIR}\" <linkflags>WindowsApp.lib <cxxflags>/ZW <compileflags>-DVirtualAlloc=VirtualAllocFromApp <compileflags>-D_WIN32_WINNT=0x0A00\n")
++    # else()
++        # set(TOOLSET_OPTIONS "${TOOLSET_OPTIONS} <compileflags>-D_WIN32_WINNT=0x0602")
++    # endif()
++endif()
++
++string(APPEND ${config} "\n;\n")
+ 
+-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+-    list(APPEND B2_OPTIONS address-model=64)
++###### End of toolset setup
++
++find_path(BZIP2_INCLUDE bzlib.h)
++if(NOT BZIP2_INCLUDE)
++    message(FATAL_ERROR "Could not find bzip2 header: bzlib.h")
++endif()
++if(CMAKE_BUILD_TYPE STREQUAL Debug)
++    set(BZIP2_NAME bz2d)
+ else()
+-    list(APPEND B2_OPTIONS address-model=32)
++    set(BZIP2_NAME bz2)
++endif()
++find_library(BZIP2_LIBRARY NAMES ${BZIP2_NAME})
++if(NOT BZIP2_LIBRARY)
++    message(FATAL_ERROR "Could not find library: ${BZIP2_NAME}")
+ endif()
++get_filename_component(BZIP2_SEARCH ${BZIP2_LIBRARY} DIRECTORY)
++set(BZIP2_INCLUDE ${BZIP2_INCLUDE_DIR})
++string(APPEND ${config} "\nusing bzip2 : :\n")
++string(APPEND ${config} "<include>\"${BZIP2_INCLUDE}\"\n")
++string(APPEND ${config} "<search>\"${BZIP2_SEARCH}\"\n")
++string(APPEND ${config} "<name>\"${BZIP2_NAME}\"\n;\n")
+ 
+-if(APPLE)
+-    list(APPEND B2_OPTIONS target-os=darwin toolset=clang)
++find_path(ZLIB_INCLUDE zlib.h)
++if(NOT ZLIB_INCLUDE)
++    message(FATAL_ERROR "Could not find zlib header: zlib.h")
++endif()
++if(WIN32)
++    if(CMAKE_BUILD_TYPE STREQUAL Debug)
++      set(ZLIB_NAME zlibd)
++    else()
++      set(ZLIB_NAME zlib)
++    endif()
+ else()
+-    list(APPEND B2_OPTIONS target-os=linux toolset=gcc)
++    set(ZLIB_NAME z)
++endif()
++find_library(ZLIB_LIBRARY NAMES ${ZLIB_NAME})
++if(NOT ZLIB_LIBRARY)
++    message(FATAL_ERROR "Could not find library: ${ZLIB_NAME}")
+ endif()
++get_filename_component(ZLIB_SEARCH ${ZLIB_LIBRARY} DIRECTORY)
++set(ZLIB_INCLUDE ${ZLIB_INCLUDE_DIR})
++string(APPEND ${config} "\nusing zlib : :\n")
++string(APPEND ${config} "<include>\"${ZLIB_INCLUDE}\"\n")
++string(APPEND ${config} "<search>\"${ZLIB_SEARCH}\"\n")
++string(APPEND ${config} "<name>\"${ZLIB_NAME}\"\n;\n")
+ 
+-# Properly handle compiler and linker flags passed by VCPKG
+-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+-    set(CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
+-    set(CFLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
+-    if(BUILD_SHARED_LIBS)
+-        set(LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
++find_path(ZSTD_INCLUDE zstd.h)
++if(NOT ZSTD_INCLUDE)
++    message(FATAL_ERROR "Could not find zstd header: zstd.h")
++endif()
++if(BUILD_SHARED_LIBS OR NOT WIN32)
++    if(CMAKE_BUILD_TYPE STREQUAL Debug)
++      set(ZSTD_NAME zstdd)
+     else()
+-        set(LDFLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_RELEASE}")
++      set(ZSTD_NAME zstd)
+     endif()
+-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+-    set(CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
+-    set(CFLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
+-    if(BUILD_SHARED_LIBS)
+-        set(LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
++else()
++    if(CMAKE_BUILD_TYPE STREQUAL Debug)
++      set(ZSTD_NAME zstd)
+     else()
+-        set(LDFLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_DEBUG}")
++      set(ZSTD_NAME zstd)
+     endif()
+ endif()
++find_library(ZSTD_LIBRARY NAMES ${ZSTD_NAME})
++if(NOT ZSTD_LIBRARY)
++    message(FATAL_ERROR "Could not find library: ${ZSTD_NAME}")
++endif()
++get_filename_component(ZSTD_SEARCH ${ZSTD_LIBRARY} DIRECTORY)
++set(ZSTD_INCLUDE ${ZSTD_INCLUDE_DIR})
++string(APPEND ${config} "\nusing zstd : :\n")
++string(APPEND ${config} "<include>\"${ZSTD_INCLUDE}\"\n")
++string(APPEND ${config} "<search>\"${ZSTD_SEARCH}\"\n")
++string(APPEND ${config} "<name>\"${ZSTD_NAME}\"\n;\n")
+ 
+-string(STRIP "${CXXFLAGS}" CXXFLAGS)
+-string(STRIP "${CFLAGS}"   CFLAGS)
+-string(STRIP "${LDFLAGS}"  LDFLAGS)
++find_path(ICU_PATH include/unicode/utf.h)
+ 
+-if(NOT CXXFLAGS STREQUAL "")
+-    string(REPLACE " " " <cxxflags>" CXXFLAGS "<cxxflags>${CXXFLAGS}")
+-endif()
+-if(NOT CFLAGS STREQUAL "")
+-    string(REPLACE " " " <cflags>" CFLAGS "<cflags>${CFLAGS}")
+-endif()
+-if(NOT LDLAGS STREQUAL "")
+-    string(REPLACE " " " <linkflags>" LDFLAGS "<linkflags>${LDFLAGS}")
+-endif()
++set(B2_OPTIONS)
+ 
+-#set(CXXFLAGS "${CXXFLAGS} <compileflags>-Wno-error=unused-command-line-argument")
+-if(CMAKE_CXX_COMPILER_TARGET)
+-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_TARGET} <compileflags>${CMAKE_CXX_COMPILER_TARGET}")
++if(DEFINED BOOST_CMAKE_FRAGMENT)
++    include(${BOOST_CMAKE_FRAGMENT})
+ endif()
+-if(CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN)
+-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN} <compileflags>${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}")
++
++# Add build type specific options
++if(BUILD_SHARED_LIBS)
++    list(APPEND B2_OPTIONS link=shared)
++else()
++    list(APPEND B2_OPTIONS link=static)
+ endif()
+-if(CMAKE_SYSROOT AND CMAKE_CXX_COMPILE_OPTIONS_SYSROOT)
+-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT}")
++# Set runtime linkage.
++if(VCPKG_CRT_LINKAGE STREQUAL static)
++  list(APPEND B2_OPTIONS runtime_link=static)
++else()
++  list(APPEND B2_OPTIONS runtime_link=shared)
+ endif()
+-foreach(INCDIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
+-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_INCLUDE_FLAG_C}${CMAKE_INCLUDE_FLAG_C_SEP}${INCDIR}")
+-endforeach()
+ 
+-if(APPLE)
+-  set(CXXFLAGS "${CXXFLAGS} <compileflags>-D_DARWIN_C_SOURCE")
++if(VCPKG_TARGET_ARCHITECTURE MATCHES "x64")
++    list(APPEND B2_OPTIONS address-model=64 architecture=x86)
++elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
++    list(APPEND B2_OPTIONS address-model=32 architecture=arm)
++elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
++    list(APPEND B2_OPTIONS address-model=64 architecture=arm)
++else()
++    list(APPEND B2_OPTIONS address-model=32 architecture=x86)
+ endif()
++# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
++    # list(APPEND B2_OPTIONS address-model=64)
++# else()
++    # list(APPEND B2_OPTIONS address-model=32)
++# endif()
++
++# find_library(ZLIB_LIBPATH z)
++# list(APPEND B2_OPTIONS
++    # -sZLIB_BINARY=z
++    # -sZLIB_LIBPATH="${ZLIB_LIBPATH}"
++# )
++# if(CMAKE_BUILD_TYPE STREQUAL "Release")
++    # find_library(BZIP2_LIBPATH bz2)
++    # list(APPEND B2_OPTIONS
++        # -sBZIP2_BINARY=bz2
++        # -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
++        # variant=release
++    # )
++# elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
++    # find_library(BZIP2_LIBPATH bz2d)
++    # list(APPEND B2_OPTIONS
++        # -sBZIP2_BINARY=bz2d
++        # -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
++        # variant=debug
++    # )
++# endif()
+ 
+-find_library(ZLIB_LIBPATH z)
+-list(APPEND B2_OPTIONS
+-    -sZLIB_BINARY=z
+-    -sZLIB_LIBPATH="${ZLIB_LIBPATH}"
+-)
+-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+-    find_library(BZIP2_LIBPATH bz2)
+-    list(APPEND B2_OPTIONS
+-        -sBZIP2_BINARY=bz2
+-        -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
+-        variant=release
+-    )
+-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+-    find_library(BZIP2_LIBPATH bz2d)
+-    list(APPEND B2_OPTIONS
+-        -sBZIP2_BINARY=bz2d
+-        -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
+-        variant=debug
+-    )
+-endif()
+-
+-configure_file(${CMAKE_CURRENT_LIST_DIR}/user-config.jam ${CMAKE_CURRENT_BINARY_DIR}/user-config.jam @ONLY)
+-
+-set(NUMBER_OF_PROCESSORS 1)
+-if(DEFINED ENV{NUMBER_OF_PROCESSORS})
+-    set(NUMBER_OF_PROCESSORS $ENV{NUMBER_OF_PROCESSORS})
+-elseif(CMAKE_HOST_LINUX)
+-    execute_process(
+-        COMMAND nproc
+-        OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
+-    )
+-    string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+-    string(REPLACE " " "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+-endif()
+-if(NOT NUMBER_OF_PROCESSORS)
+-    set(NUMBER_OF_PROCESSORS 1)
+-endif()
+ 
+ add_custom_target(boost ALL
+     COMMAND "${B2_EXE}"
+-        --user-config=${CMAKE_CURRENT_BINARY_DIR}/user-config.jam
+-        --stagedir=${CMAKE_CURRENT_BINARY_DIR}/stage
+-        --build-dir=${CMAKE_CURRENT_BINARY_DIR}
++        #--project-config=${config}
++        --user-config=${config}
++        --prefix=${CMAKE_INSTALL_PREFIX}
++        --libdir=${CMAKE_INSTALL_PREFIX}/lib
++        --exec-prefix=${CMAKE_INSTALL_PREFIX}/bin
++        --includedir=${CMAKE_INSTALL_PREFIX}/$<$<CONFIG:Debug>:../>include
++        --cmakedir=${CMAKE_INSTALL_PREFIX}/share/boost
++        --build-dir=${CMAKE_CURRENT_BINARY_DIR}/build
+         ${B2_OPTIONS}
+         --layout=system
+         --with-atomic
+@@ -143,26 +267,30 @@ add_custom_target(boost ALL
+         --with-system
+         --with-thread
+         --with-chrono
+-        -sZLIB_INCLUDE="${ZLIB_INCLUDE}"
+-        -sBZIP2_INCLUDE="${BZIP2_INCLUDE}"
+         -sICU_PATH="${ICU_PATH}"
+-        -j${NUMBER_OF_PROCESSORS}
++        -j${VCPKG_CONCURRENCY}
+         -sBOOST_ROOT=${BOOST_BUILD_PATH}
+         -sBOOST_BUILD_PATH=${BOOST_BUILD_PATH}
+-        --debug-configuration
++        #--debug-configuration
+         --ignore-site-config
+         --hash
+         -q
+-
+-        architecture=x86
++        #architecture=x86
+         threading=multi
+-        threadapi=pthread
+         debug-symbols=on
+-
+         stage
++        install
+     WORKING_DIRECTORY ${SOURCE_PATH}/build
+ )
+ 
++# Install PDB files.
++install(CODE [[
++  file(GLOB_RECURSE PDB_FILES ${CMAKE_CURRENT_BINARY_DIR}/build/boost/bin.v2/libs/*/boost_*.pdb)
++  if(PDB_FILES)
++    file(INSTALL ${PDB_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
++  endif()
++]])
++
+ set(SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/stage/lib)
+ install(
+     CODE "file(GLOB LIBS ${SUBDIR}/*.so.* ${SUBDIR}/*.so ${SUBDIR}/*.a ${SUBDIR}/*.dylib ${SUBDIR}/*.dylib.*)\nif(LIBS)\nfile(INSTALL \${LIBS} DESTINATION \"\${CMAKE_INSTALL_PREFIX}/lib\")\nendif()"
+diff --git a/./modular/Jamroot.jam.in b/../boost-modular-build-helper/Jamroot.jam
+similarity index 73%
+rename from ./modular/Jamroot.jam.in
+rename to ../boost-modular-build-helper/Jamroot.jam
+index 0aeb968a9..688303b19 100644
+--- a/./modular/Jamroot.jam.in
++++ b/../boost-modular-build-helper/Jamroot.jam
+@@ -1,69 +1,27 @@
+ constant BOOST_VERSION : 1.72.0 ;
+ constant BOOST_VERSION_ABI_TAG : 1_72 ;
+ constant BOOST_JAMROOT_MODULE : $(__name__) ;
+-path-constant BOOST_ROOT : "@CURRENT_INSTALLED_DIR@" ;
+ 
+ import boostcpp ;
+-boostcpp.set-version $(BOOST_VERSION) ;
+-
+ import feature ;
+-import "@CURRENT_INSTALLED_DIR@/share/boost\_install/boost-install" ;
+-
+-
+-
+-rule handle-static-runtime ( properties * )
+-{
+-    # Using static runtime with shared libraries is impossible on Linux, and
+-    # dangerous on Windows. Therefore, we disallow it. This might be drastic,
+-    # but it was disabled for a while without anybody complaining.
+-
+-    # For CW, static runtime is needed so that std::locale works.
+-    if <link>shared in $(properties) && <runtime-link>static in $(properties) &&
+-        ! ( <toolset>cw in $(properties) )
+-    {
+-        if ! $(.shared-static-warning-emitted)
+-        {
+-            ECHO "warning: skipping configuration link=shared, runtime-link=static" ;
+-            ECHO "warning: this combination is either impossible or too dangerous" ;
+-            ECHO "warning: to be of any use" ;
+-            .shared-static-warning-emitted = 1 ;
+-        }
+ 
+-        return <build>no ;
+-    }
+-}
++boostcpp.set-version $(BOOST_VERSION) ;
+ 
+ project boost : requirements
+     <include>include&&"@CURRENT_INSTALLED_DIR@/include"
+     <define>BOOST_ALL_NO_LIB=1
+     <tag>@$(__name__).tag
+-    <conditional>@handle-static-runtime
+     @REQUIREMENTS@
+     ;
+ 
+-# Make the boost-install rule visible in subprojects
+-
+-# This rule should be called from libraries' Jamfiles and will create two
+-# targets, "install" and "stage", that will install or stage that library. The
+-# --prefix option is respected, but --with and --without options, naturally, are
+-# ignored.
+-#
+-# - libraries -- list of library targets to install.
+-
+ rule boost-install ( libraries * )
+ {
+-    boost-install.boost-install $(libraries) ;
++    stagedir = [ option.get stagedir ] ;
++    install stage
++        : $(libraries)
++        : <location>$(stagedir)/lib ;
+ }
+ 
+-
+-# rule boost-install ( libraries * )
+-# {
+-#     stagedir = [ option.get stagedir ] ;
+-#     install stage
+-#         : $(libraries)
+-#        : <location>$(stagedir)/lib ;
+-# }
+-
+ rule tag ( name : type ? : property-set )
+ {
+     return [ boostcpp.tag $(name) : $(type) : $(property-set) ] ;
+@@ -185,14 +143,8 @@ rule requires ( foo * )
+ 
+ rule boost-lib ( name : sources * : requirements * : default-build * : usage-requirements * )
+ {
+-    autolink = <link>shared:<define>BOOST_$(name:U)_DYN_LINK=1 ;
+     name = boost_$(name) ;
+-    lib $(name)
+-        : $(sources)
+-        : $(requirements) $(autolink)
+-        : $(default-build)
+-        : $(usage-requirements) $(autolink)
+-        ;
++    lib $(name) : $(sources) : $(requirements) : $(default-build) : $(usage-requirements) ;
+     boost-install $(name) ;
+ }
+ 
+diff --git a/./modular/boost-modular-build.cmake b/../boost-modular-build-helper/boost-modular-build.cmake
+index a735d455e..15e5ea92b 100644
+--- a/./modular/boost-modular-build.cmake
++++ b/../boost-modular-build-helper/boost-modular-build.cmake
+@@ -1,16 +1,3 @@
+-function(setup_build_jam SOURCE_DIR)
+-    configure_file("${CURRENT_INSTALLED_DIR}/share/boost-build/boost-build.jam.in" "${SOURCE_DIR}/boost-build.jam" @ONLY)
+-    configure_file("${CURRENT_INSTALLED_DIR}/share/boost-build/Jamroot.jam.in" "${SOURCE_DIR}/Jamroot.jam" @ONLY)
+-    file(INSTALL "${CURRENT_INSTALLED_DIR}/tools/boost-build/boostcpp.jam"
+-                 #"${CURRENT_INSTALLED_DIR}/share/boost_install/boost-install.jam" 
+-                 #"${CURRENT_INSTALLED_DIR}/share/boost_install/boost-install-dirs.jam"
+-                 #"${CURRENT_INSTALLED_DIR}/share/boost/BoostDetectToolset.cmake"
+-                 #"${CURRENT_INSTALLED_DIR}/share/boost/BoostConfig.cmake"
+-                 DESTINATION "${SOURCE_DIR}")
+-        file(INSTALL "${CURRENT_INSTALLED_DIR}/share/boost_install"
+-                 DESTINATION "${SOURCE_DIR}/tools")
+-endfunction()
+-
+ function(boost_modular_build)
+     cmake_parse_arguments(_bm "" "SOURCE_PATH;REQUIREMENTS;BOOST_CMAKE_FRAGMENT" "OPTIONS" ${ARGN})
+ 
+@@ -18,7 +5,8 @@ function(boost_modular_build)
+         message(FATAL_ERROR "SOURCE_PATH is a required argument to boost_modular_build.")
+     endif()
+ 
+-    # Todo: this serves too similar a purpose as vcpkg_find_acquire_program()
++    # Getting boost build for the host machine (build machine if you use autotool definition)
++    # TODO: this serves too similar a purpose as vcpkg_find_acquire_program()
+     if(CMAKE_HOST_WIN32 AND VCPKG_CMAKE_SYSTEM_NAME AND NOT VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+         get_filename_component(BOOST_BUILD_PATH "${CURRENT_INSTALLED_DIR}/../x86-windows/tools/boost-build" ABSOLUTE)
+     elseif(NOT VCPKG_TARGET_ARCHITECTURE STREQUAL "x64" AND NOT VCPKG_TARGET_ARCHITECTURE STREQUAL "x86")
+@@ -31,36 +19,35 @@ function(boost_modular_build)
+         message(FATAL_ERROR "The x86 boost-build tools must be installed to build for non-x86/x64 platforms. Please run `vcpkg install boost-build:x86-windows`.")
+     endif()
+ 
+-    if(EXISTS "${BOOST_BUILD_PATH}/b2${VCPKG_HOST_EXECUTABLE_SUFFIX}")
+-        set(B2_EXE "${BOOST_BUILD_PATH}/b2${VCPKG_HOST_EXECUTABLE_SUFFIX}")
++    if(EXISTS "${BOOST_BUILD_PATH}/b2.exe")
++        set(B2_EXE "${BOOST_BUILD_PATH}/b2.exe")
++    elseif(EXISTS "${BOOST_BUILD_PATH}/b2")
++        set(B2_EXE "${BOOST_BUILD_PATH}/b2")
+     else()
+         message(FATAL_ERROR "Could not find b2 in ${BOOST_BUILD_PATH}")
+     endif()
+ 
+-    if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+-        list(APPEND _bm_OPTIONS windows-api=store)
+-    endif()
+-
+-    set(_bm_DIR "${CURRENT_INSTALLED_DIR}/share/boost-build")
+-
+-    set(REQUIREMENTS ${_bm_REQUIREMENTS})
+-
+-
++    ##################### 
++    set(_bm_DIR ${CURRENT_INSTALLED_DIR}/share/boost-build)
++    # Adjust build rules to current vcpkg layout
+     if(VCPKG_TARGET_IS_WINDOWS)
+         set(BOOST_LIB_PREFIX)
+-        set(BOOST_LIB_RELEASE_SUFFIX -${VCPKG_PLATFORM_TOOLSET}.lib) #TODO: check suffix
+-        set(BOOST_LIB_DEBUG_SUFFIX -${VCPKG_PLATFORM_TOOLSET}-gd.lib)
++        set(BOOST_LIB_RELEASE_SUFFIX -vc140-mt.lib)
++        set(BOOST_LIB_DEBUG_SUFFIX -vc140-mt-gd.lib)
+     else()
+         set(BOOST_LIB_PREFIX lib)
+         if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
+-            set(BOOST_LIB_RELEASE_SUFFIX ${VCPKG_TARGET_STATIC_LIBRARY_PREFIX})
+-            set(BOOST_LIB_DEBUG_SUFFIX ${VCPKG_TARGET_STATIC_LIBRARY_PREFIX})
++            set(BOOST_LIB_RELEASE_SUFFIX .a)
++            set(BOOST_LIB_DEBUG_SUFFIX .a)
++        elseif(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "Darwin")
++            set(BOOST_LIB_RELEASE_SUFFIX .dylib)
++            set(BOOST_LIB_DEBUG_SUFFIX .dylib)
+         else()
+-            set(BOOST_LIB_RELEASE_SUFFIX ${VCPKG_TARGET_SHARED_LIBRARY_SUFFIX})
+-            set(BOOST_LIB_DEBUG_SUFFIX ${VCPKG_TARGET_SHARED_LIBRARY_SUFFIX})
++            set(BOOST_LIB_RELEASE_SUFFIX .so)
++            set(BOOST_LIB_DEBUG_SUFFIX .so)
+         endif()
+     endif()
+-
++    set(REQUIREMENTS ${_bm_REQUIREMENTS})
+     if(EXISTS "${_bm_SOURCE_PATH}/build/Jamfile.v2")
+         file(READ ${_bm_SOURCE_PATH}/build/Jamfile.v2 _contents)
+         #string(REPLACE "import ../../predef/check/predef" "import predef/check/predef" _contents "${_contents}")
+@@ -74,17 +61,16 @@ function(boost_modular_build)
+         string(REGEX REPLACE " /boost//([^/ ]+)" " /boost/\\1//boost_\\1" _contents "${_contents}")
+         file(WRITE ${_bm_SOURCE_PATH}/build/Jamfile.v2 "${_contents}")
+     endif()
+-   
+-    setup_build_jam("${_bm_SOURCE_PATH}")
+-    #configure_file(${_bm_DIR}/Jamroot.jam.in ${_bm_SOURCE_PATH}/Jamroot.jam @ONLY)
++    configure_file(${_bm_DIR}/Jamroot.jam ${_bm_SOURCE_PATH}/Jamroot.jam @ONLY)
++    #######################
+     # if(EXISTS "${CURRENT_INSTALLED_DIR}/share/boost-config/checks")
+     #     file(COPY "${CURRENT_INSTALLED_DIR}/share/boost-config/checks" DESTINATION "${_bm_SOURCE_PATH}/build/config")
+     # endif()
+     # if(EXISTS "${CURRENT_INSTALLED_DIR}/share/boost-predef/check")
+     #     file(COPY "${CURRENT_INSTALLED_DIR}/share/boost-predef/check" DESTINATION "${_bm_SOURCE_PATH}/build/predef")
+     # endif()
+-
+-    if(NOT VCPKG_TARGET_IS_WINDOWS)
++    ######################################################################
++    if(NOT VCPKT_TARGET_IS_WINDOWS) 
+         if(DEFINED _bm_BOOST_CMAKE_FRAGMENT)
+             set(fragment_option "-DBOOST_CMAKE_FRAGMENT=${_bm_BOOST_CMAKE_FRAGMENT}")
+         endif()
+@@ -93,9 +79,14 @@ function(boost_modular_build)
+             PREFER_NINJA
+             OPTIONS
+                 "-DB2_EXE=${B2_EXE}"
++                "-DBOOST_BUILD_DIR=${_bm_DIR}"
+                 "-DSOURCE_PATH=${_bm_SOURCE_PATH}"
+                 "-DBOOST_BUILD_PATH=${BOOST_BUILD_PATH}"
+                 ${fragment_option}
++                "-DVCPKG_CONCURRENCY=${VCPKG_CONCURRENCY}"
++                "-DCURRENT_INSTALLED_DIR=${CURRENT_INSTALLED_DIR}"
++                "-DCURRENT_PACKAGES_DIR=${CURRENT_PACKAGES_DIR}"
++                "-DPORT=${PORT}"
+         )
+         vcpkg_install_cmake()
+ 
+@@ -104,306 +95,273 @@ function(boost_modular_build)
+         endif()
+         return()
+     endif()
++    #################################################
++    ## Windows b uilds below
++
++    # #####################
++    # # Cleanup previous builds
++    # ######################
++    # file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
++    # if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
++        # # It is possible for a file in this folder to be locked due to antivirus or vctip
++        # execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
++        # file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
++        # if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
++            # message(FATAL_ERROR "Unable to remove directory: ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel\n  Files are likely in use.")
++        # endif()
++    # endif()
+ 
+-    #####################
+-    # Cleanup previous builds
+-    ######################
+-    file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
+-    if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
+-        # It is possible for a file in this folder to be locked due to antivirus or vctip
+-        execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
+-        file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
+-        if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel)
+-            message(FATAL_ERROR "Unable to remove directory: ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel\n  Files are likely in use.")
+-        endif()
+-    endif()
+-
+-    file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
+-    if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
+-        # It is possible for a file in this folder to be locked due to antivirus or vctip
+-        execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
+-        file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
+-        if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
+-            message(FATAL_ERROR "Unable to remove directory: ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg\n  Files are likely in use.")
+-        endif()
+-    endif()
+-
+-    if(EXISTS ${CURRENT_PACKAGES_DIR}/debug)
+-        message(FATAL_ERROR "Error: directory exists: ${CURRENT_PACKAGES_DIR}/debug\n  The previous package was not fully cleared. This is an internal error.")
+-    endif()
+-    file(MAKE_DIRECTORY
+-        ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg
+-        ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel
+-    )
+-
+-    if(DEFINED ENV{NUMBER_OF_PROCESSORS})
+-        set(NUMBER_OF_PROCESSORS $ENV{NUMBER_OF_PROCESSORS})
+-    else()
+-        execute_process(
+-            COMMAND nproc
+-            OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
+-        )
+-        string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+-        string(REPLACE " " "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
+-    endif()
++    # file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
++    # if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
++        # # It is possible for a file in this folder to be locked due to antivirus or vctip
++        # execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 1)
++        # file(REMOVE_RECURSE ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
++        # if(EXISTS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg)
++            # message(FATAL_ERROR "Unable to remove directory: ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg\n  Files are likely in use.")
++        # endif()
++    # endif()
+ 
+-    ######################
+-    # Generate configuration
+-    ######################
+-    list(APPEND _bm_OPTIONS
+-        -j${NUMBER_OF_PROCESSORS}
+-        --debug-configuration
+-        --debug-building
+-        --debug-generators
+-        --disable-icu
+-        --ignore-site-config
+-        --hash
+-        -q
+-        "-sZLIB_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
+-        "-sBZIP2_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
+-        "-sLZMA_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
+-        "-sZSTD_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
+-        threading=multi
+-    )
+-    if(NOT VCPKG_CMAKE_SYSTEM_NAME OR VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+-        list(APPEND _bm_OPTIONS threadapi=win32)
+-    else()
+-        list(APPEND _bm_OPTIONS threadapi=pthread)
+-    endif()
+-    set(_bm_OPTIONS_DBG
+-         -sZLIB_BINARY=zlibd
+-         "-sZLIB_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
+-         -sBZIP2_BINARY=bz2d
+-         "-sBZIP2_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
+-         -sLZMA_BINARY=lzmad
+-         "-sLZMA_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
+-         -sZSTD_BINARY=zstdd
+-         "-sZSTD_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
+-    )
++    # if(EXISTS ${CURRENT_PACKAGES_DIR}/debug)
++        # message(FATAL_ERROR "Error: directory exists: ${CURRENT_PACKAGES_DIR}/debug\n  The previous package was not fully cleared. This is an internal error.")
++    # endif()
++    # file(MAKE_DIRECTORY
++        # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg
++        # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel
++    # )
++
++    # # if(DEFINED ENV{NUMBER_OF_PROCESSORS})
++        # # set(NUMBER_OF_PROCESSORS $ENV{NUMBER_OF_PROCESSORS})
++    # # else()
++        # # execute_process(
++            # # COMMAND nproc
++            # # OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
++        # # )
++        # # string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
++        # # string(REPLACE " " "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
++    # # endif()
++
++    # ######################
++    # # Generate configuration
++    # ######################
++    
++    # if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
++        # list(APPEND _bm_OPTIONS windows-api=store)
++    # endif()
++    # list(APPEND _bm_OPTIONS
++        # -j${VCPKG_CONCURRENCY}
++        # --debug-configuration
++        # --debug-building
++        # --debug-generators
++        # --disable-icu
++        # --ignore-site-config
++        # --hash
++        # -q
++        # "-sZLIB_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
++        # "-sBZIP2_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
++        # "-sLZMA_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
++        # "-sZSTD_INCLUDE=${CURRENT_INSTALLED_DIR}/include"
++        # threading=multi
++    # )
++    # list(APPEND _bm_OPTIONS threadapi=win32)
++
++
++    # set(_bm_OPTIONS_DBG
++         # -sZLIB_BINARY=zlibd
++         # "-sZLIB_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
++         # -sBZIP2_BINARY=bz2d
++         # "-sBZIP2_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
++         # -sLZMA_BINARY=lzmad
++         # "-sLZMA_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
++         # -sZSTD_BINARY=zstdd
++         # "-sZSTD_LIBPATH=${CURRENT_INSTALLED_DIR}/debug/lib"
++    # )
+  
+-    set(_bm_OPTIONS_REL
+-         -sZLIB_BINARY=zlib
+-         "-sZLIB_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
+-         -sBZIP2_BINARY=bz2
+-         "-sBZIP2_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
+-         -sLZMA_BINARY=lzma
+-         "-sLZMA_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
+-         -sZSTD_BINARY=zstd
+-         "-sZSTD_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
+-    )
+-
+-    # Properly handle compiler and linker flags passed by VCPKG
+-    if(VCPKG_CXX_FLAGS)
+-        list(APPEND _bm_OPTIONS "cxxflags=${VCPKG_CXX_FLAGS}")
+-    endif()
+-
+-    if(VCPKG_CXX_FLAGS_RELEASE)
+-        list(APPEND _bm_OPTIONS_REL "cxxflags=${VCPKG_CXX_FLAGS_RELEASE}")
+-    endif()
++    # set(_bm_OPTIONS_REL
++         # -sZLIB_BINARY=zlib
++         # "-sZLIB_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
++         # -sBZIP2_BINARY=bz2
++         # "-sBZIP2_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
++         # -sLZMA_BINARY=lzma
++         # "-sLZMA_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
++         # -sZSTD_BINARY=zstd
++         # "-sZSTD_LIBPATH=${CURRENT_INSTALLED_DIR}/lib"
++    # )
++    
++    # # Properly handle compiler and linker flags passed by VCPKG
++    # if(VCPKG_CXX_FLAGS)
++        # list(APPEND _bm_OPTIONS "cxxflags=${VCPKG_CXX_FLAGS}")
++    # endif()
+ 
+-    if(VCPKG_CXX_FLAGS_DEBUG)
+-        list(APPEND _bm_OPTIONS_DBG "cxxflags=${VCPKG_CXX_FLAGS_DEBUG}")
+-    endif()
++    # if(VCPKG_CXX_FLAGS_RELEASE)
++        # list(APPEND _bm_OPTIONS_REL "cxxflags=${VCPKG_CXX_FLAGS_RELEASE}")
++    # endif()
+ 
++    # if(VCPKG_CXX_FLAGS_DEBUG)
++        # list(APPEND _bm_OPTIONS_DBG "cxxflags=${VCPKG_CXX_FLAGS_DEBUG}")
++    # endif()
+ 
+-    if(VCPKG_C_FLAGS)
+-        list(APPEND _bm_OPTIONS "cflags=${VCPKG_C_FLAGS}")
+-    endif()
+ 
+-    if(VCPKG_C_FLAGS_RELEASE)
+-        list(APPEND _bm_OPTIONS_REL "cflags=${VCPKG_C_FLAGS_RELEASE}")
+-    endif()
++    # if(VCPKG_C_FLAGS)
++        # list(APPEND _bm_OPTIONS "cflags=${VCPKG_C_FLAGS}")
++    # endif()
+ 
+-    if(VCPKG_C_FLAGS_DEBUG)
+-        list(APPEND _bm_OPTIONS_DBG "cflags=${VCPKG_C_FLAGS_DEBUG}")
+-    endif()
++    # if(VCPKG_C_FLAGS_RELEASE)
++        # list(APPEND _bm_OPTIONS_REL "cflags=${VCPKG_C_FLAGS_RELEASE}")
++    # endif()
+ 
++    # if(VCPKG_C_FLAGS_DEBUG)
++        # list(APPEND _bm_OPTIONS_DBG "cflags=${VCPKG_C_FLAGS_DEBUG}")
++    # endif()
+ 
+-    if(VCPKG_LINKER_FLAGS)
+-        list(APPEND _bm_OPTIONS "linkflags=${VCPKG_LINKER_FLAGS}")
+-    endif()
+ 
+-    if(VCPKG_LINKER_FLAGS_RELEASE)
+-        list(APPEND _bm_OPTIONS_REL "linkflags=${VCPKG_LINKER_FLAGS_RELEASE}")
+-    endif()
++    # if(VCPKG_LINKER_FLAGS)
++        # list(APPEND _bm_OPTIONS "linkflags=${VCPKG_LINKER_FLAGS}")
++    # endif()
+ 
+-    if(VCPKG_LINKER_FLAGS_DEBUG)
+-        list(APPEND _bm_OPTIONS_DBG "linkflags=${VCPKG_LINKER_FLAGS_DEBUG}")
+-    endif()
++    # if(VCPKG_LINKER_FLAGS_RELEASE)
++        # list(APPEND _bm_OPTIONS_REL "linkflags=${VCPKG_LINKER_FLAGS_RELEASE}")
++    # endif()
+ 
++    # if(VCPKG_LINKER_FLAGS_DEBUG)
++        # list(APPEND _bm_OPTIONS_DBG "linkflags=${VCPKG_LINKER_FLAGS_DEBUG}")
++    # endif()
+ 
+-    # Add build type specific options
+-    if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
+-        list(APPEND _bm_OPTIONS runtime-link=shared)
+-    else()
+-        list(APPEND _bm_OPTIONS runtime-link=static)
+-    endif()
+ 
+-    if (VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+-        list(APPEND _bm_OPTIONS link=shared)
+-    else()
+-        list(APPEND _bm_OPTIONS link=static)
+-    endif()
++    # # Add build type specific options
++    # if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
++        # list(APPEND _bm_OPTIONS runtime-link=shared)
++    # else()
++        # list(APPEND _bm_OPTIONS runtime-link=static)
++    # endif()
+ 
+-    if(VCPKG_TARGET_ARCHITECTURE MATCHES "x64")
+-        list(APPEND _bm_OPTIONS address-model=64 architecture=x86)
+-    elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
+-        list(APPEND _bm_OPTIONS address-model=32 architecture=arm)
+-    elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
+-        list(APPEND _bm_OPTIONS address-model=64 architecture=arm)
+-    else()
+-        list(APPEND _bm_OPTIONS address-model=32 architecture=x86)
+-    endif()
++    # if (VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
++        # list(APPEND _bm_OPTIONS link=shared)
++    # else()
++        # list(APPEND _bm_OPTIONS link=static)
++    # endif()
+ 
+-    file(TO_CMAKE_PATH "${_bm_DIR}/nothing.bat" NOTHING_BAT)
+-    set(TOOLSET_OPTIONS " <cxxflags>/EHsc <compileflags>-Zm800 <compileflags>-nologo")
+-    if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+-        if(NOT VCPKG_PLATFORM_TOOLSET MATCHES "v140")
+-            find_path(PATH_TO_CL cl.exe)
+-            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "${PATH_TO_CL}/../../../lib/x86/store/references" NO_DEFAULT_PATH)
+-            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
+-                message(FATAL_ERROR "Could not find `platform.winmd` in VS. Do you have the Universal Windows Platform development workload installed?")
+-            endif()
+-        else()
+-            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "$ENV{VS140COMNTOOLS}/../../VC/LIB/store/references")
+-            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
+-                message(FATAL_ERROR "Could not find `platform.winmd` in VS2015.")
+-            endif()
+-        endif()
+-        file(TO_NATIVE_PATH "${PLATFORM_WINMD_DIR}" PLATFORM_WINMD_DIR)
+-        string(REPLACE "\\" "/" PLATFORM_WINMD_DIR ${PLATFORM_WINMD_DIR}) # escape backslashes
++    # if(VCPKG_TARGET_ARCHITECTURE MATCHES "x64")
++        # list(APPEND _bm_OPTIONS address-model=64 architecture=x86)
++    # elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
++        # list(APPEND _bm_OPTIONS address-model=32 architecture=arm)
++    # elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
++        # list(APPEND _bm_OPTIONS address-model=64 architecture=arm)
++    # else()
++        # list(APPEND _bm_OPTIONS address-model=32 architecture=x86)
++    # endif()
+ 
+-        set(TOOLSET_OPTIONS "${TOOLSET_OPTIONS} <cflags>-Zl <compileflags> /AI\"${PLATFORM_WINMD_DIR}\" <linkflags>WindowsApp.lib <cxxflags>/ZW <compileflags>-DVirtualAlloc=VirtualAllocFromApp <compileflags>-D_WIN32_WINNT=0x0A00")
+-    else()
+-        set(TOOLSET_OPTIONS "${TOOLSET_OPTIONS} <compileflags>-D_WIN32_WINNT=0x0602")
+-    endif()
++    # file(TO_CMAKE_PATH "${_bm_DIR}/nothing.bat" NOTHING_BAT)
+ 
+-    configure_file("${_bm_DIR}/user-config.jam.in" ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/user-config.jam @ONLY)
+-    configure_file("${_bm_DIR}/user-config.jam.in" ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/user-config.jam @ONLY)
++    # configure_file(${_bm_DIR}/user-config.jam ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/user-config.jam @ONLY)
++    # configure_file(${_bm_DIR}/user-config.jam ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/user-config.jam @ONLY)
+ 
+-    if(VCPKG_PLATFORM_TOOLSET MATCHES "v14.")
+-        list(APPEND _bm_OPTIONS toolset=msvc)
+-    elseif(VCPKG_PLATFORM_TOOLSET MATCHES "external")
+-        list(APPEND _bm_OPTIONS toolset=gcc)
+-    else()
+-        message(FATAL_ERROR "Unsupported value for VCPKG_PLATFORM_TOOLSET: '${VCPKG_PLATFORM_TOOLSET}'")
+-    endif()
++    # if(VCPKG_PLATFORM_TOOLSET MATCHES "v14.")
++        # list(APPEND _bm_OPTIONS toolset=msvc)
++    # elseif(VCPKG_PLATFORM_TOOLSET MATCHES "external")
++        # list(APPEND _bm_OPTIONS toolset=gcc)
++    # else()
++        # message(FATAL_ERROR "Unsupported value for VCPKG_PLATFORM_TOOLSET: '${VCPKG_PLATFORM_TOOLSET}'")
++    # endif()
+ 
+-    ######################
+-    # Perform build + Package
+-    ######################
+-    if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
+-        message(STATUS "Building ${TARGET_TRIPLET}-rel")
+-        set(ENV{BOOST_BUILD_PATH} "${BOOST_BUILD_PATH}")
+-        vcpkg_execute_required_process(
+-            COMMAND "${B2_EXE}"
+-                "--stagedir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/stage"
+-                "--build-dir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel"
+-                "--user-config=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/user-config.jam"
+-                "${_bm_OPTIONS}"
+-                "${_bm_OPTIONS_REL}"
+-                "variant=release"
+-                "debug-symbols=on"
+-            WORKING_DIRECTORY "${WORK_DIR}"
+-            LOGNAME build-${TARGET_TRIPLET}-rel
+-        )
+-        message(STATUS "Building ${TARGET_TRIPLET}-rel done")
+-        file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}/test" INSTALL_PREFIX_PATH )
+-        file(TO_NATIVE_PATH "${CURRENT_PACKAGES_DIR}/test/tools/${PORT}" INSTALL_TOOLS_PATH )
+-        vcpkg_execute_required_process(
+-            COMMAND "${B2_EXE}"
+-                "install"
+-                "--prefix=${INSTALL_PREFIX_PATH}"
+-                "--bindir=${INSTALL_TOOLS_PATH}"
+-                "--stagedir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/stage"
+-                "--build-dir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel"
+-                "--user-config=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/user-config.jam"
+-                "${_bm_OPTIONS}"
+-                "${_bm_OPTIONS_REL}"
+-                "variant=release"
+-                "debug-symbols=on"
+-            WORKING_DIRECTORY "${WORK_DIR}"
+-            LOGNAME install-${TARGET_TRIPLET}-rel
+-        )
+-        message(STATUS "Building ${TARGET_TRIPLET}-rel done")
+-    endif()
++    # ######################
++    # # Perform build + Package
++    # ######################
++    # if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
++        # message(STATUS "Building ${TARGET_TRIPLET}-rel")
++        # set(ENV{BOOST_BUILD_PATH} "${BOOST_BUILD_PATH}")
++        # vcpkg_execute_required_process(
++            # COMMAND "${B2_EXE}"
++                # --stagedir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/stage
++                # --build-dir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel
++                # --user-config=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/user-config.jam
++                # ${_bm_OPTIONS}
++                # ${_bm_OPTIONS_REL}
++                # variant=release
++                # debug-symbols=on
++            # WORKING_DIRECTORY ${_bm_SOURCE_PATH}/build
++            # LOGNAME build-${TARGET_TRIPLET}-rel
++        # )
++        # message(STATUS "Building ${TARGET_TRIPLET}-rel done")
++    # endif()
+ 
+-    if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
+-        message(STATUS "Building ${TARGET_TRIPLET}-dbg")
+-        set(ENV{BOOST_BUILD_PATH} "${BOOST_BUILD_PATH}")
+-        vcpkg_execute_required_process(
+-            COMMAND "${B2_EXE}"
+-                "--stagedir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/stage"
+-                "--build-dir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg"
+-                "--user-config=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/user-config.jam"
+-                "${_bm_OPTIONS}"
+-                "${_bm_OPTIONS_DBG}"
+-                "variant=debug"
+-            WORKING_DIRECTORY "${_bm_SOURCE_PATH}/build"
+-            LOGNAME build-${TARGET_TRIPLET}-dbg
+-        )
+-        message(STATUS "Building ${TARGET_TRIPLET}-dbg done")
+-    endif()
++    # if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
++        # message(STATUS "Building ${TARGET_TRIPLET}-dbg")
++        # set(ENV{BOOST_BUILD_PATH} "${BOOST_BUILD_PATH}")
++        # vcpkg_execute_required_process(
++            # COMMAND "${B2_EXE}"
++                # --stagedir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/stage
++                # --build-dir=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg
++                # --user-config=${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/user-config.jam
++                # ${_bm_OPTIONS}
++                # ${_bm_OPTIONS_DBG}
++                # variant=debug
++            # WORKING_DIRECTORY ${_bm_SOURCE_PATH}/build
++            # LOGNAME build-${TARGET_TRIPLET}-dbg
++        # )
++        # message(STATUS "Building ${TARGET_TRIPLET}-dbg done")
++    # endif()
+ 
+-    if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
+-        message(STATUS "Packaging ${TARGET_TRIPLET}-rel")
+-        file(GLOB REL_LIBS
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.lib
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.a
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.so
+-        )
+-        file(COPY ${REL_LIBS}
+-            DESTINATION ${CURRENT_PACKAGES_DIR}/lib)
+-        if (VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
+-            file(GLOB REL_DLLS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.dll)
+-            file(COPY ${REL_DLLS}
+-                DESTINATION ${CURRENT_PACKAGES_DIR}/bin
+-                FILES_MATCHING PATTERN "*.dll")
+-        endif()
+-        message(STATUS "Packaging ${TARGET_TRIPLET}-rel done")
+-    endif()
++    # if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
++        # message(STATUS "Packaging ${TARGET_TRIPLET}-rel")
++        # file(GLOB REL_LIBS
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.lib
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.a
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.so
++        # )
++        # file(COPY ${REL_LIBS}
++            # DESTINATION ${CURRENT_PACKAGES_DIR}/lib)
++        # if (VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
++            # file(GLOB REL_DLLS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/boost/build/*/*.dll)
++            # file(COPY ${REL_DLLS}
++                # DESTINATION ${CURRENT_PACKAGES_DIR}/bin
++                # FILES_MATCHING PATTERN "*.dll")
++        # endif()
++        # message(STATUS "Packaging ${TARGET_TRIPLET}-rel done")
++    # endif()
+ 
+-    if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
+-        message(STATUS "Packaging ${TARGET_TRIPLET}-dbg")
+-        file(GLOB DBG_LIBS
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.lib
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.a
+-            ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.so
+-        )
+-        file(COPY ${DBG_LIBS}
+-            DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib)
+-        if (VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
+-            file(GLOB DBG_DLLS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.dll)
+-            file(COPY ${DBG_DLLS}
+-                DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin
+-                FILES_MATCHING PATTERN "*.dll")
+-        endif()
+-        message(STATUS "Packaging ${TARGET_TRIPLET}-dbg done")
++    # if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
++        # message(STATUS "Packaging ${TARGET_TRIPLET}-dbg")
++        # file(GLOB DBG_LIBS
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.lib
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.a
++            # ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.so
++        # )
++        # file(COPY ${DBG_LIBS}
++            # DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib)
++        # if (VCPKG_LIBRARY_LINKAGE STREQUAL dynamic)
++            # file(GLOB DBG_DLLS ${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/boost/build/*/*.dll)
++            # file(COPY ${DBG_DLLS}
++                # DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin
++                # FILES_MATCHING PATTERN "*.dll")
++        # endif()
++        # message(STATUS "Packaging ${TARGET_TRIPLET}-dbg done")
++    # endif()
++    
++    if(VCPKG_TARGET_IS_WINDOWS)
++        # Lib renaming due to missing configs.. 
++        file(GLOB INSTALLED_LIBS ${CURRENT_PACKAGES_DIR}/debug/lib/*.lib ${CURRENT_PACKAGES_DIR}/lib/*.lib)
++        foreach(LIB ${INSTALLED_LIBS})
++            get_filename_component(OLD_FILENAME ${LIB} NAME)
++            get_filename_component(DIRECTORY_OF_LIB_FILE ${LIB} DIRECTORY)
++            string(REPLACE "libboost_" "boost_" NEW_FILENAME ${OLD_FILENAME})
++            string(REPLACE "-s-" "-" NEW_FILENAME ${NEW_FILENAME}) # For Release libs
++            string(REPLACE "-vc141-" "-vc140-" NEW_FILENAME ${NEW_FILENAME}) # To merge VS2017 and VS2015 binaries
++            string(REPLACE "-vc142-" "-vc140-" NEW_FILENAME ${NEW_FILENAME}) # To merge VS2019 and VS2015 binaries
++            string(REPLACE "-sgd-" "-gd-" NEW_FILENAME ${NEW_FILENAME}) # For Debug libs
++            string(REPLACE "-sgyd-" "-gyd-" NEW_FILENAME ${NEW_FILENAME}) # For Debug libs
++            string(REPLACE "-x32-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
++            string(REPLACE "-x64-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
++            string(REPLACE "-a32-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
++            string(REPLACE "-a64-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
++            string(REPLACE "-1_72" "" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake > 3.10 to locate the binaries
++            if("${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME}" STREQUAL "${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME}")
++                # nothing to do
++            elseif(EXISTS ${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME})
++                file(REMOVE ${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME})
++            else()
++                file(RENAME ${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME} ${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME})
++            endif()
++        endforeach()
++        vcpkg_copy_pdbs()
+     endif()
+-
+-    file(GLOB INSTALLED_LIBS ${CURRENT_PACKAGES_DIR}/debug/lib/*.lib ${CURRENT_PACKAGES_DIR}/lib/*.lib)
+-    foreach(LIB ${INSTALLED_LIBS})
+-        get_filename_component(OLD_FILENAME ${LIB} NAME)
+-        get_filename_component(DIRECTORY_OF_LIB_FILE ${LIB} DIRECTORY)
+-        string(REPLACE "libboost_" "boost_" NEW_FILENAME ${OLD_FILENAME})
+-        string(REPLACE "-s-" "-" NEW_FILENAME ${NEW_FILENAME}) # For Release libs
+-        string(REPLACE "-vc141-" "-vc140-" NEW_FILENAME ${NEW_FILENAME}) # To merge VS2017 and VS2015 binaries
+-        string(REPLACE "-vc142-" "-vc140-" NEW_FILENAME ${NEW_FILENAME}) # To merge VS2019 and VS2015 binaries
+-        string(REPLACE "-sgd-" "-gd-" NEW_FILENAME ${NEW_FILENAME}) # For Debug libs
+-        string(REPLACE "-sgyd-" "-gyd-" NEW_FILENAME ${NEW_FILENAME}) # For Debug libs
+-        string(REPLACE "-x32-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
+-        string(REPLACE "-x64-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
+-        string(REPLACE "-a32-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
+-        string(REPLACE "-a64-" "-" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake 3.10 and earlier to locate the binaries
+-        string(REPLACE "-1_72" "" NEW_FILENAME ${NEW_FILENAME}) # To enable CMake > 3.10 to locate the binaries
+-        if("${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME}" STREQUAL "${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME}")
+-            # nothing to do
+-        elseif(EXISTS ${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME})
+-            file(REMOVE ${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME})
+-        else()
+-            file(RENAME ${DIRECTORY_OF_LIB_FILE}/${OLD_FILENAME} ${DIRECTORY_OF_LIB_FILE}/${NEW_FILENAME})
+-        endif()
+-    endforeach()
+-
+-    vcpkg_copy_pdbs()
+ endfunction()
+diff --git a/./modular/portfile.cmake b/../boost-modular-build-helper/portfile.cmake
+index 6ed367434..76410dd82 100644
+--- a/./modular/portfile.cmake
++++ b/../boost-modular-build-helper/portfile.cmake
+@@ -1,12 +1,12 @@
+ set(VCPKG_POLICY_EMPTY_PACKAGE enabled)
+ 
+-file(
+-    COPY
+-        ${CMAKE_CURRENT_LIST_DIR}/boost-modular-build.cmake
+-        ${CMAKE_CURRENT_LIST_DIR}/Jamroot.jam
+-        ${CMAKE_CURRENT_LIST_DIR}/nothing.bat
+-        ${CMAKE_CURRENT_LIST_DIR}/user-config.jam
+-        ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt
+-    DESTINATION
+-        ${CURRENT_PACKAGES_DIR}/share/boost-build
+-)
++# file(
++    # COPY
++        # ${CMAKE_CURRENT_LIST_DIR}/boost-modular-build.cmake
++        # ${CMAKE_CURRENT_LIST_DIR}/Jamroot.jam
++        # ${CMAKE_CURRENT_LIST_DIR}/nothing.bat
++        # ${CMAKE_CURRENT_LIST_DIR}/user-config.jam
++        # ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt
++    # DESTINATION
++        # ${CURRENT_PACKAGES_DIR}/share/boost-build
++# )
+diff --git a/./modular/user-config.jam.in b/../boost-modular-build-helper/user-config.jam
+similarity index 95%
+rename from ./modular/user-config.jam.in
+rename to ../boost-modular-build-helper/user-config.jam
+index 78677c0ab..6da26953f 100644
+--- a/./modular/user-config.jam.in
++++ b/../boost-modular-build-helper/user-config.jam
+@@ -1,5 +1,7 @@
+ import toolset ;
+ 
++@TOOLSET_SETTINGS@
++
+ if "@VCPKG_PLATFORM_TOOLSET@" != "external"
+ {
+     using msvc : : cl.exe :

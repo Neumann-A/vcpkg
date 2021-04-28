@@ -1,11 +1,175 @@
-cmake_minimum_required(VERSION 3.9)
-project(boost CXX)
+cmake_minimum_required(VERSION 3.14)
+project(boost LANGUAGES C CXX ASM_MASM)
+
+# Create a b2 project config based on CMake toolchain settings.
+set(config "TOOLSET_SETTINGS")
+set(${config} "")
+if(WIN32)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    string(APPEND ${config} "using clang-win : ${CMAKE_CXX_COMPILER_VERSION} : ")
+  elseif(MSVC)
+    string(REGEX REPLACE "^([0-9]*)([0-9])$" "\\1.\\2" toolset_version "${MSVC_TOOLSET_VERSION}")
+    string(APPEND ${config} "using msvc : ${toolset_version} : ")
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL Intel)
+    message(FATAL_ERROR "Intel compiler currently not supported by boost within vcpkg!")
+  else()
+    string(APPEND ${config} "using gcc : ${CMAKE_CXX_COMPILER_VERSION} : ")
+  endif()
+else()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+    string(APPEND ${config} "using clang-linux : ${CMAKE_CXX_COMPILER_VERSION} : ")
+  else()
+    string(APPEND ${config} "using gcc : ${CMAKE_CXX_COMPILER_VERSION} : ")
+  endif()
+endif()
+
+string(APPEND ${config} "\"${CMAKE_CXX_COMPILER}\" :\n")
+if(WIN32)
+    file(TO_CMAKE_PATH "${BOOST_BUILD_DIR}/nothing.bat" NOTHING_BAT)
+    string(APPEND ${config} "<setup>\"${NOTHING_BAT}\"\n")
+elseif(MINGW)
+    string(APPEND ${config} "<flavor>mingw")
+endif()
+string(APPEND ${config} "\n")
+
+macro(append name value)
+  string(REPLACE "\"" "\\\"" quoted_value "${value}")
+  string(APPEND ${config} "${name}\"${quoted_value}\"\n")
+endmacro()
+
+if(WIN32 AND DEFINED CMAKE_LINKER)
+  append("<linker>" "\"${CMAKE_LINKER}\"")
+  string(APPEND ${config} "\n")
+endif()
+if(DEFINED CMAKE_RANLIB AND NOT CMAKE_RANLIB STREQUAL ":")
+    append("<ranlib>" "${CMAKE_RANLIB}")
+endif()
+if(DEFINED CMAKE_AR)
+    append("<archiver>" "${CMAKE_AR}")
+endif()
+append("<cflags>" "${CMAKE_C_FLAGS}")
+append("<variant>debug:<cflags>" "${CMAKE_C_FLAGS_DEBUG}")
+append("<variant>release:<cflags>" "${CMAKE_C_FLAGS_RELEASE}")
+string(APPEND ${config} "\n")
+
+if(CMAKE_CXX_STANDARD)
+  if(CMAKE_CXX_STANDARD STREQUAL 98)
+    append("<cxxstd>" "98")
+  elseif(CMAKE_CXX_STANDARD STREQUAL 11)
+    append("<cxxstd>" "11")
+  elseif(CMAKE_CXX_STANDARD STREQUAL 14)
+    append("<cxxstd>" "14")
+  elseif(CMAKE_CXX_STANDARD STREQUAL 17)
+    append("<cxxstd>" "17")
+  else()
+    append("<cxxstd>" "latest")
+    # TODO: Add boost version check when asio fixes this.
+    append("<cxxflags>" "-DBOOST_ASIO_DISABLE_CONCEPTS")
+  endif()
+  if(NOT CMAKE_CXX_EXTENSIONS)
+    append("<cxxstd-dialect>" "iso")
+  endif()
+endif()
+append("<cxxflags>" "${CMAKE_CXX_FLAGS}")
+append("<variant>debug:<cxxflags>" "${CMAKE_CXX_FLAGS_DEBUG}")
+append("<variant>release:<cxxflags>" "${CMAKE_CXX_FLAGS_RELEASE}")
+string(APPEND ${config} "\n")
+
+if(BUILD_SHARED_LIBS)
+  append("<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS}")
+  append("<variant>debug:<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
+  append("<variant>release:<linkflags>" "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
+else()
+  append("<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS}")
+  append("<variant>debug:<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS_DEBUG}")
+  append("<variant>release:<linkflags>" "${CMAKE_STATIC_LINKER_FLAGS_RELEASE}")
+endif()
+string(APPEND ${config} "\n")
+
+get_property(COMPILE_DEFINITIONS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
+foreach(define ${COMPILE_DEFINITIONS})
+  string(APPEND ${config} "<define>${define}\n")
+endforeach()
+
+if(CMAKE_SYSTEM_NAME MATCHES "WindowsStore" AND MSVC)
+    # set(TOOLSET_OPTIONS " <cxxflags>/EHsc <compileflags>-Zm800 <compileflags>-nologo")
+    # if(VCPKG_CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+        if(NOT VCPKG_PLATFORM_TOOLSET MATCHES "v140")
+            find_path(PATH_TO_CL cl.exe)
+            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "${PATH_TO_CL}/../../../lib/x86/store/references" NO_DEFAULT_PATH)
+            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
+                message(FATAL_ERROR "Could not find `platform.winmd` in VS. Do you have the Universal Windows Platform development workload installed?")
+            endif()
+        else()
+            find_path(PLATFORM_WINMD_DIR platform.winmd PATHS "$ENV{VS140COMNTOOLS}/../../VC/LIB/store/references")
+            if(PLATFORM_WINMD_DIR MATCHES "NOTFOUND")
+                message(FATAL_ERROR "Could not find `platform.winmd` in VS2015.")
+            endif()
+        endif()
+        file(TO_NATIVE_PATH "${PLATFORM_WINMD_DIR}" PLATFORM_WINMD_DIR)
+        string(REPLACE "\\" "/" PLATFORM_WINMD_DIR ${PLATFORM_WINMD_DIR}) # escape backslashes
+        string(APPEND ${config} "<cflags>-Zl <compileflags> /AI\"${PLATFORM_WINMD_DIR}\" <linkflags>WindowsApp.lib <cxxflags>/ZW <compileflags>-DVirtualAlloc=VirtualAllocFromApp <compileflags>-D_WIN32_WINNT=0x0A00\n")
+    # else()
+        # set(TOOLSET_OPTIONS "${TOOLSET_OPTIONS} <compileflags>-D_WIN32_WINNT=0x0602")
+    # endif()
+endif()
+
+string(APPEND ${config} "\n;\n")
+
+###### End of toolset setup
+
+find_path(BZIP2_INCLUDE bzlib.h)
+if(NOT BZIP2_INCLUDE)
+    message(FATAL_ERROR "Could not find bzip2 header: bzlib.h")
+endif()
+find_library(BZIP2_LIBRARY NAMES bz2 bz2d NAMES_PER_DIR)
+if(NOT BZIP2_LIBRARY)
+    message(FATAL_ERROR "Could not find library: bzip")
+endif()
+get_filename_component(BZIP2_SEARCH ${BZIP2_LIBRARY} DIRECTORY)
+get_filename_component(BZIP2_NAME ${BZIP2_LIBRARY} NAME_WLE )
+#set(BZIP2_INCLUDE ${BZIP2_INCLUDE_DIR})
+string(APPEND ${config} "\nusing bzip2 : :\n")
+string(APPEND ${config} "<include>\"${BZIP2_INCLUDE}\"\n")
+string(APPEND ${config} "<search>\"${BZIP2_SEARCH}\"\n")
+string(APPEND ${config} "<name>\"${BZIP2_NAME}\"\n;\n")
 
 find_path(ZLIB_INCLUDE zlib.h)
-find_path(BZIP2_INCLUDE bzlib.h)
-find_path(ICU_PATH include/unicode/utf.h)
+if(NOT ZLIB_INCLUDE)
+    message(FATAL_ERROR "Could not find zlib header: zlib.h")
+endif()
 
-set(VCPKG_PLATFORM_TOOLSET external)
+find_library(ZLIB_LIBRARY NAMES zlibd zlib z NAMES_PER_DIR)
+if(NOT ZLIB_LIBRARY)
+    message(FATAL_ERROR "Could not find library: zlib")
+endif()
+get_filename_component(ZLIB_SEARCH ${ZLIB_LIBRARY} DIRECTORY)
+get_filename_component(ZLIB_NAME ${ZLIB_LIBRARY} NAME_WLE )
+#set(ZLIB_INCLUDE ${ZLIB_INCLUDE_DIR})
+string(APPEND ${config} "\nusing zlib : :\n")
+string(APPEND ${config} "<include>\"${ZLIB_INCLUDE}\"\n")
+string(APPEND ${config} "<search>\"${ZLIB_SEARCH}\"\n")
+string(APPEND ${config} "<name>\"${ZLIB_NAME}\"\n;\n")
+
+find_path(ZSTD_INCLUDE zstd.h)
+if(NOT ZSTD_INCLUDE)
+    message(FATAL_ERROR "Could not find zstd header: zstd.h")
+endif()
+find_library(ZSTD_LIBRARY NAMES zstd zstdd zstd_static zstd_staticd NAMES_PER_DIR)
+if(NOT ZSTD_LIBRARY)
+    message(FATAL_ERROR "Could not find library: zstd")
+endif()
+get_filename_component(ZSTD_SEARCH ${ZSTD_LIBRARY} DIRECTORY)
+get_filename_component(ZSTD_NAME ${ZSTD_LIBRARY} NAME_WLE )
+#set(ZSTD_INCLUDE ${ZSTD_INCLUDE_DIR})
+string(APPEND ${config} "\nusing zstd : :\n")
+string(APPEND ${config} "<include>\"${ZSTD_INCLUDE}\"\n")
+string(APPEND ${config} "<search>\"${ZSTD_SEARCH}\"\n")
+string(APPEND ${config} "<name>\"${ZSTD_NAME}\"\n;\n")
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/user-config.jam.in ${CMAKE_CURRENT_BINARY_DIR}/user-config.jam @ONLY)
+
+find_path(ICU_PATH include/unicode/utf.h)
 
 set(B2_OPTIONS)
 
@@ -15,125 +179,42 @@ endif()
 
 # Add build type specific options
 if(BUILD_SHARED_LIBS)
-    list(APPEND B2_OPTIONS runtime-link=shared)
-    set(LIB_RUNTIME_LINK "shared")
-else()
-    list(APPEND B2_OPTIONS runtime-link=static)
-    set(LIB_RUNTIME_LINK "static")
-endif()
-
-if(BUILD_SHARED_LIBS)
     list(APPEND B2_OPTIONS link=shared)
 else()
     list(APPEND B2_OPTIONS link=static)
 endif()
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    list(APPEND B2_OPTIONS address-model=64)
+# Set runtime linkage.
+if(VCPKG_CRT_LINKAGE STREQUAL static)
+  list(APPEND B2_OPTIONS runtime-link=static)
 else()
-    list(APPEND B2_OPTIONS address-model=32)
+  list(APPEND B2_OPTIONS runtime-link=shared)
 endif()
 
-if(APPLE)
-    list(APPEND B2_OPTIONS target-os=darwin toolset=clang)
+if(VCPKG_TARGET_ARCHITECTURE MATCHES "x64")
+    list(APPEND B2_OPTIONS address-model=64 architecture=x86)
+elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm")
+    list(APPEND B2_OPTIONS address-model=32 architecture=arm)
+elseif(VCPKG_TARGET_ARCHITECTURE STREQUAL "arm64")
+    list(APPEND B2_OPTIONS address-model=64 architecture=arm)
 else()
-    list(APPEND B2_OPTIONS target-os=linux toolset=gcc)
+    list(APPEND B2_OPTIONS address-model=32 architecture=x86)
 endif()
-
-# Properly handle compiler and linker flags passed by VCPKG
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
-    set(CFLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-    if(BUILD_SHARED_LIBS)
-        set(LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
-    else()
-        set(LDFLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_RELEASE}")
-    endif()
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CFLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
-    if(BUILD_SHARED_LIBS)
-        set(LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
-    else()
-        set(LDFLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${CMAKE_STATIC_LINKER_FLAGS_DEBUG}")
-    endif()
-endif()
-
-string(STRIP "${CXXFLAGS}" CXXFLAGS)
-string(STRIP "${CFLAGS}"   CFLAGS)
-string(STRIP "${LDFLAGS}"  LDFLAGS)
-
-if(NOT CXXFLAGS STREQUAL "")
-    string(REPLACE " " " <cxxflags>" CXXFLAGS "<cxxflags>${CXXFLAGS}")
-endif()
-if(NOT CFLAGS STREQUAL "")
-    string(REPLACE " " " <cflags>" CFLAGS "<cflags>${CFLAGS}")
-endif()
-if(NOT LDLAGS STREQUAL "")
-    string(REPLACE " " " <linkflags>" LDFLAGS "<linkflags>${LDFLAGS}")
-endif()
-
-#set(CXXFLAGS "${CXXFLAGS} <compileflags>-Wno-error=unused-command-line-argument")
-if(CMAKE_CXX_COMPILER_TARGET)
-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_TARGET} <compileflags>${CMAKE_CXX_COMPILER_TARGET}")
-endif()
-if(CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN)
-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_EXTERNAL_TOOLCHAIN} <compileflags>${CMAKE_CXX_COMPILER_EXTERNAL_TOOLCHAIN}")
-endif()
-if(CMAKE_SYSROOT AND CMAKE_CXX_COMPILE_OPTIONS_SYSROOT)
-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_CXX_COMPILE_OPTIONS_SYSROOT}${CMAKE_SYSROOT}")
-endif()
-foreach(INCDIR ${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES})
-    set(CXXFLAGS "${CXXFLAGS} <compileflags>${CMAKE_INCLUDE_FLAG_C}${CMAKE_INCLUDE_FLAG_C_SEP}${INCDIR}")
-endforeach()
-
-if(APPLE)
-  set(CXXFLAGS "${CXXFLAGS} <compileflags>-D_DARWIN_C_SOURCE")
-endif()
-
-find_library(ZLIB_LIBPATH z)
-list(APPEND B2_OPTIONS
-    -sZLIB_BINARY=z
-    -sZLIB_LIBPATH="${ZLIB_LIBPATH}"
-)
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    find_library(BZIP2_LIBPATH bz2)
-    list(APPEND B2_OPTIONS
-        -sBZIP2_BINARY=bz2
-        -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
-        variant=release
-    )
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    find_library(BZIP2_LIBPATH bz2d)
-    list(APPEND B2_OPTIONS
-        -sBZIP2_BINARY=bz2d
-        -sBZIP2_LIBPATH="${BZIP2_LIBPATH}"
-        variant=debug
-    )
-endif()
-
-configure_file(${CMAKE_CURRENT_LIST_DIR}/user-config.jam ${CMAKE_CURRENT_BINARY_DIR}/user-config.jam @ONLY)
-
-set(NUMBER_OF_PROCESSORS 1)
-if(DEFINED ENV{NUMBER_OF_PROCESSORS})
-    set(NUMBER_OF_PROCESSORS $ENV{NUMBER_OF_PROCESSORS})
-elseif(CMAKE_HOST_LINUX)
-    execute_process(
-        COMMAND nproc
-        OUTPUT_VARIABLE NUMBER_OF_PROCESSORS
-    )
-    string(REPLACE "\n" "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
-    string(REPLACE " " "" NUMBER_OF_PROCESSORS "${NUMBER_OF_PROCESSORS}")
-endif()
-if(NOT NUMBER_OF_PROCESSORS)
-    set(NUMBER_OF_PROCESSORS 1)
-endif()
+# if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # list(APPEND B2_OPTIONS address-model=64)
+# else()
+    # list(APPEND B2_OPTIONS address-model=32)
+# endif()
 
 add_custom_target(boost ALL
     COMMAND "${B2_EXE}"
+        #--project-config=${config}
         --user-config=${CMAKE_CURRENT_BINARY_DIR}/user-config.jam
-        --stagedir=${CMAKE_CURRENT_BINARY_DIR}/stage
-        --build-dir=${CMAKE_CURRENT_BINARY_DIR}
+        --prefix=${CMAKE_INSTALL_PREFIX}
+        --libdir=${CMAKE_INSTALL_PREFIX}/lib
+        --exec-prefix=${CMAKE_INSTALL_PREFIX}/bin
+        --includedir=${CMAKE_INSTALL_PREFIX}/$<$<CONFIG:Debug>:../>include
+        --cmakedir=${CMAKE_INSTALL_PREFIX}/share/boost
+        --build-dir=${CMAKE_CURRENT_BINARY_DIR}/build
         ${B2_OPTIONS}
         --layout=system
         --with-atomic
@@ -143,25 +224,30 @@ add_custom_target(boost ALL
         --with-system
         --with-thread
         --with-chrono
-        -sZLIB_INCLUDE="${ZLIB_INCLUDE}"
-        -sBZIP2_INCLUDE="${BZIP2_INCLUDE}"
+        --debug-building        # Debug info on which targets are being build
+        --debug-configuration   # Debug info on loading b2
         -sICU_PATH="${ICU_PATH}"
-        -j${NUMBER_OF_PROCESSORS}
+        -j${VCPKG_CONCURRENCY}
         -sBOOST_ROOT=${BOOST_BUILD_PATH}
         -sBOOST_BUILD_PATH=${BOOST_BUILD_PATH}
-        --debug-configuration
         --ignore-site-config
         --hash
         -q
-
-        architecture=x86
+        #architecture=x86
         threading=multi
-        threadapi=pthread
         debug-symbols=on
-
         stage
+        install
     WORKING_DIRECTORY ${SOURCE_PATH}/build
 )
+
+# Install PDB files.
+install(CODE [[
+  file(GLOB_RECURSE PDB_FILES ${CMAKE_CURRENT_BINARY_DIR}/build/boost/bin.v2/libs/*/boost_*.pdb)
+  if(PDB_FILES)
+    file(INSTALL ${PDB_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+  endif()
+]])
 
 set(SUBDIR ${CMAKE_CURRENT_BINARY_DIR}/stage/lib)
 install(
