@@ -1,0 +1,12 @@
+{
+  "name": "gtksourceview",
+  "version": "5.0.0",
+  "description": "GtkSourceView is a GNOME library that extends GtkTextView, the standard GTK+ widget for multiline text editing.",
+  "homepage": "https://wiki.gnome.org/Projects/GtkSourceView",
+  "dependencies": [
+    "gtk",
+    "pcre2",
+    "libxml2",
+    "fribidi"
+  ]
+}
