@@ -2400,6 +2400,10 @@
       "baseline": "4.0.0",
       "port-version": 0
     },
+    "gtksourceview": {
+      "baseline": "5.0.0",
+      "port-version": 0
+    },
     "gts": {
       "baseline": "0.7.6",
       "port-version": 4
