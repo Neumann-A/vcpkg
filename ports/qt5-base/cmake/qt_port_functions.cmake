@@ -12,7 +12,11 @@ include(qt_fix_makefile_install)
 include(qt_fix_cmake)
 include(qt_fix_prl)
 #Helper functions
-include(qt_download_submodule)
+if(QT_IS_LATEST OR QT_BUILD_LATEST)
+    include(qt_download_submodule-latest)
+else()
+    include(qt_download_submodule)
+endif()
 include(qt_build_submodule)
 include(qt_install_copyright)
 

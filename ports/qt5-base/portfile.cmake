@@ -364,6 +364,12 @@ else()
         )
     install_qt()
 
+    #if(QT_BUILD_LATEST)
+    #    set(TOOL_NAMES uic qvkgen qlalr qdbuscpp2xml qdbusxml2cpp)
+    #    vcpkg_copy_tools(TOOL_NAMES ${TOOL_NAMES} DESTINATION "${CURRENT_PACKAGES_DIR}/tools/qt5/bin")
+    #    vcpkg_copy_tools(TOOL_NAMES ${TOOL_NAMES} DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}/bin" AUTO_CLEAN)
+    #endif()
+
     #########################
     #TODO: Make this a function since it is also done by modular scripts!
     # e.g. by patching mkspecs/features/qt_tools.prf somehow
@@ -452,19 +458,24 @@ else()
     endif()
     set(CURRENT_INSTALLED_DIR_BACKUP "${CURRENT_INSTALLED_DIR}")
     set(CURRENT_INSTALLED_DIR "./../../.." ) # Making the qt.conf relative and not absolute
-    configure_file(${CURRENT_PACKAGES_DIR}/tools/qt5/qt_release.conf ${CURRENT_PACKAGES_DIR}/tools/qt5/bin/qt.conf) # This makes the tools at least useable for release
+    configure_file("${CURRENT_PACKAGES_DIR}/tools/qt5/qt_release.conf" "${CURRENT_PACKAGES_DIR}/tools/qt5/bin/qt.conf") # This makes the tools at least useable for release
     set(CURRENT_INSTALLED_DIR "${CURRENT_INSTALLED_DIR_BACKUP}")
 
     qt_install_copyright(${SOURCE_PATH})
 endif()
 #install scripts for other qt ports
+if(QT_BUILD_LATEST)
+    set(SUBMODULE_DOWNLOAD "${CMAKE_CURRENT_LIST_DIR}/cmake/qt_download_submodule-latest.cmake")
+else()
+    set(SUBMODULE_DOWNLOAD "${CMAKE_CURRENT_LIST_DIR}/cmake/qt_download_submodule.cmake")
+endif()
 file(COPY
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_port_hashes.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_port_functions.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_fix_makefile_install.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_fix_cmake.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_fix_prl.cmake
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_download_submodule.cmake
+    ${SUBMODULE_DOWNLOAD}
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_build_submodule.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_install_copyright.cmake
     ${CMAKE_CURRENT_LIST_DIR}/cmake/qt_submodule_installation.cmake

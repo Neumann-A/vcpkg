@@ -4,6 +4,7 @@
   "port-version": 8,
   "description": "Qt5 Application Framework Base Module. Includes Core, GUI, Widgets, Networking, SQL, Concurrent and other essential qt components.",
   "homepage": "https://www.qt.io/",
+  "default-features" : [ "latest" ],
   "dependencies": [
     {
       "name": "angle",
@@ -35,7 +36,7 @@
   ],
   "features": {
     "latest": {
-      "description": "Build latest qt version (5.15.2) instead of LTS (latest and LTS are currently the same)"
+      "description": "Build latest qt version (KDE Branch)"
     },
     "mysqlplugin": {
       "description": "Build the sql plugin for connecting to mysql databases",

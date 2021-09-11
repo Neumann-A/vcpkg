@@ -34,6 +34,9 @@ function(configure_qt)
     get_filename_component(PERL_EXE_PATH ${PERL} DIRECTORY)
     vcpkg_add_to_path("${PERL_EXE_PATH}")
 
+    if(QT_BUILD_LATEST)
+    endif()
+
     if("${VCPKG_LIBRARY_LINKAGE}" STREQUAL "static")
         list(APPEND _csc_OPTIONS -static)
     else()
@@ -91,7 +94,7 @@ function(configure_qt)
         set(BUILD_OPTIONS ${_csc_OPTIONS} ${_csc_OPTIONS_${_buildname}}
                 -prefix ${CURRENT_INSTALLED_DIR}
                 #-extprefix ${CURRENT_INSTALLED_DIR}
-                ${EXT_BIN_DIR}
+                #${EXT_BIN_DIR}
                 -hostprefix ${CURRENT_INSTALLED_DIR}/tools/qt5${_path_suffix_${_buildname}}
                 #-hostprefix ${CURRENT_INSTALLED_DIR}/tools/qt5
                 -hostlibdir ${CURRENT_INSTALLED_DIR}/tools/qt5${_path_suffix_${_buildname}}/lib # could probably be move to manual-link

@@ -120,7 +120,7 @@ function(install_qt)
         # Restore backup
         if(CMAKE_HOST_UNIX)
             if(_ld_library_path_defined_)
-                set(ENV{LD_LIBRARY_PATH} "${_ld_library_path_backup_}")                
+                set(ENV{LD_LIBRARY_PATH} "${_ld_library_path_backup_}")
             else()
                 unset(ENV{LD_LIBRARY_PATH})
             endif()

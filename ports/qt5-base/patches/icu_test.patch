@@ -1,0 +1,16 @@
+diff --git a/src/corelib/configure.json b/src/corelib/configure.json
+index 9b5d19d41..f931901ab 100644
+--- a/src/corelib/configure.json
++++ b/src/corelib/configure.json
+@@ -111,9 +111,9 @@
+                         "debug": "-lsicuind -lsicuucd -lsicudtd",
+                         "release": "-lsicuin -lsicuuc -lsicudt"
+                     },
+-                    "condition": "config.win32 && !features.shared"
++                    "condition": "config.win32"
+                 },
+-                { "libs": "-licuin -licuuc -licudt", "condition": "config.win32 && features.shared" },
++                { "libs": "-licuin -licuuc -licudt", "condition": "config.win32" },
+                 { "libs": "-licui18n -licuuc -licudata", "condition": "!config.win32" }
+             ],
+             "use": [
