@@ -7,34 +7,34 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Kitware/VTK
-    REF 2959413ff190bc6e3ff40f5b6c1342edd2e5233f # v9.0.x used by ParaView 5.9.1
-    SHA512 16229c107ed904e8fa6850c3814b8bdcdf9700ef44f6ff5b3a77e7d793ce19954fc2c7b1219a0162cf588def6e990883cd3f808c316a4db6e65bd6cd1769dd3f
+    REF 888e3ca4e5de47b43741e099688d5d69d5125cd9 # v9.1.x used by ParaView 5.10
+    SHA512 57a2a471b110aa4db5c9245756d0476d2f8509dba7c3b0e97453656b1aac2180286858814a44864cd417d396cd4d0ce37a7182b9c3742415c2717380935045e1
     HEAD_REF master
     PATCHES
-        FindLZMA.patch
+        #FindLZMA.patch
         FindLZ4.patch
         Findproj.patch
         pegtl.patch
         pythonwrapper.patch # Required by ParaView to Wrap required classes
         NoUndefDebug.patch # Required to link against correct Python library depending on build type.
         python_debug.patch
-        fix-using-hdf5.patch
+        # fix-using-hdf5.patch
         # CHECK: module-name-mangling.patch
         # Last patch TODO: Patch out internal loguru
         FindExpat.patch # The find_library calls are taken care of by vcpkg-cmake-wrapper.cmake of expat
         # upstream vtkm patches to make it work with vtkm 1.6
-        vtkm.patch # To include an external VTKm build
-        1f00a0c9.patch
-        156fb524.patch
-        d107698a.patch
-        fix-gdal.patch
-        missing-limits.patch # This patch can be removed in next version. Since it has been merged to upstream via https://gitlab.kitware.com/vtk/vtk/-/merge_requests/7611
-        UseProj5Api.patch # Allow Proj 8.0+ (commit b66e4a7, backported). Should be in soon after 9.0.3
+        # vtkm.patch # To include an external VTKm build
+        #1f00a0c9.patch
+        #156fb524.patch
+        #d107698a.patch
+        #fix-gdal.patch
+        #missing-limits.patch # This patch can be removed in next version. Since it has been merged to upstream via https://gitlab.kitware.com/vtk/vtk/-/merge_requests/7611
+        # UseProj5Api.patch # Allow Proj 8.0+ (commit b66e4a7, backported). Should be in soon after 9.0.3
 )
 
 # =============================================================================
 #Overwrite outdated modules if they have not been patched:
-file(COPY "${CURRENT_PORT_DIR}/FindHDF5.cmake" DESTINATION "${SOURCE_PATH}/CMake/patches/99") # due to usage of targets in netcdf-c
+# file(COPY "${CURRENT_PORT_DIR}/FindHDF5.cmake" DESTINATION "${SOURCE_PATH}/CMake/patches/99") # due to usage of targets in netcdf-c
 # =============================================================================
 
 # =============================================================================
@@ -217,7 +217,7 @@ function(_vtk_move_release_tool TOOL_NAME)
     endif()
 endfunction()
 
-set(VTK_SHORT_VERSION 9.0)
+set(VTK_SHORT_VERSION 9.1)
 set(VTK_TOOLS
     vtkEncodeString-${VTK_SHORT_VERSION}
     vtkHashSource-${VTK_SHORT_VERSION}

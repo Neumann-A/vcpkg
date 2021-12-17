@@ -9,6 +9,7 @@
     "boost-format",
     "cgns",
     "protobuf",
+    "seacas",
     {
       "name": "vtk",
       "default-features": false,

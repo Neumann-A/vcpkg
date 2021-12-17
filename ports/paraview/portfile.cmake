@@ -14,7 +14,7 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO Kitware/ParaView
-    REF aad4b6f1e92154879209102edfab8367f1e7d191 # v5.9.1
+    REF e640297db9736ebd439423e3ae6c855a0df8f7d3 # v5.10
     SHA512  330fcb8525bdee9b02e06f05d4e91cc4d631d03df99c30f82bb97da5e06b5a2a6ff4ecee807b6f6c7110d2f53db1c17e4670d6078ae1cc89cfd7089b67d05bdb
     HEAD_REF master
     PATCHES
@@ -38,7 +38,7 @@ vcpkg_from_gitlab(
     OUT_SOURCE_PATH VISITIT_SOURCE_PATH
     GITLAB_URL https://gitlab.kitware.com/
     REPO paraview/visitbridge
-    REF 42fce8ad6863ca2c1308741955cca1d0cf570d22
+    REF 6f209632ce83d0068cb351ee8ae1c69ab80ec0e9
     SHA512 03a6254989d3e286a462683af92caba1e90decbdcfb2e729f2d7e1116b04d63a05c28d02c4615d780fdd0d33e2719f96617233d6e0602410cc6d894f92fe6ee3
     PATCHES 
         ${VisItPatches}
@@ -48,7 +48,7 @@ vcpkg_from_gitlab(
     OUT_SOURCE_PATH QTTESTING_SOURCE_PATH
     GITLAB_URL https://gitlab.kitware.com/
     REPO paraview/qttesting
-    REF 72290689c7c55622d729bf95c97e7627026a234e
+    REF d9d12c9817ae7d6ae92394e8b714b30f343feaab
     SHA512  fb18c6745b784b294f01d5391ba4cdcaa109443a193eb35fbf1553fdb3a4f7217f784fd4893fab72784cec5bd3fc821bf1e766e943d0f562c5917788800599b0
 )
 
@@ -57,7 +57,7 @@ vcpkg_from_gitlab(
     OUT_SOURCE_PATH CATALYST_SOURCE_PATH
     GITLAB_URL https://gitlab.kitware.com/
     REPO paraview/catalyst
-    REF e36e4a5f3c67011c97c335cce23d2bc3abc0d086
+    REF 25994d8141795b57b6cb6d9e3d7655b82e3da74c
     SHA512  9926c272ab8785997f9c98cfaf696943081b0ddb0e9e343602722671b6f3eaef5b8de5dd049ca783b6844c7e328a96e1b09c8b24c16f001eeeed2d154d290480
 )
 

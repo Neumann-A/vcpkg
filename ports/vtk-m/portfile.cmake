@@ -40,17 +40,17 @@ list(APPEND OPTIONS -DBUILD_TESTING=OFF)
 vcpkg_from_gitlab(GITLAB_URL "https://gitlab.kitware.com" 
                   OUT_SOURCE_PATH SOURCE_PATH 
                   REPO vtk/vtk-m 
-                  REF 13a117e0e8935eef3f320b5a1cd71d9911ad9853 # v1.6.0 Version is strongly locked to VTK 9.0. Upgrading will most likly brake the VTK build
-                  SHA512 54f7f52ab4ee7954b6a303ffd3b8bcb18105b5d2fd8ed54b4e487fce2ebfbc51507e632189f775c79eea22ad24bd56bca401ddd679fc03d787342dd33d2ba18b
+                  REF d5143ad7ed2e55025cec2f49fb3f0ab46045a8e2 # v1.7.0 Version is strongly locked to VTK 9.1. Upgrading will most likly brake the VTK build
+                  SHA512 969edf3fcf297c9e3aa3743a66591fdd44e718dafc16dbb6f1a57755f56a20a00b1db0d46e8d3fcb328d0dfa64071807474e7f68f44e28104dd2eea2d7570216
                   FILE_DISAMBIGUATOR 1)
 vcpkg_cmake_configure(
   SOURCE_PATH "${SOURCE_PATH}"
   OPTIONS ${OPTIONS}
 )
 vcpkg_cmake_install()
-vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/vtkm-1.6 PACKAGE_NAME vtkm)
+vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/vtkm-1.7 PACKAGE_NAME vtkm)
 
-vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/vtkm/VTKmConfig.cmake" [[set_and_check(VTKm_CONFIG_DIR "${PACKAGE_PREFIX_DIR}/lib/cmake/vtkm-1.6")]] [[set_and_check(VTKm_CONFIG_DIR "${PACKAGE_PREFIX_DIR}/share/vtkm")]])
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/vtkm/VTKmConfig.cmake" [[set_and_check(VTKm_CONFIG_DIR "${PACKAGE_PREFIX_DIR}/lib/cmake/vtkm-1.7")]] [[set_and_check(VTKm_CONFIG_DIR "${PACKAGE_PREFIX_DIR}/share/vtkm")]])
 vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/share/vtkm/VTKmConfig.cmake" "${CURRENT_BUILDTREES_DIR}" "not/existing/buildtree")
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
