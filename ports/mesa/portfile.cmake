@@ -6,11 +6,11 @@ set(PATCHES
     # Fix swrAVX512 build
     swravx512-post-static-link.patch
     # Fix swr build with MSVC
-    swr-msvc-2.patch
+    # swr-msvc-2.patch
     # Fix swr build with LLVM 13
-    swr-llvm13.patch
+    # swr-llvm13.patch
     # Fix radv MSVC build with LLVM 13
-    radv-msvc-llvm13-2.patch
+    # radv-msvc-llvm13-2.patch
     # Fix d3d10sw MSVC build
     d3d10sw.patch
 )
@@ -24,8 +24,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org
     OUT_SOURCE_PATH SOURCE_PATH
     REPO mesa/mesa
-    REF mesa-21.2.5
-    SHA512 24387ce5ea0f200b39f930a842fc56fa120dd5cc6a94d175374ce788356dc7ac73e6390a7ffa6a1f2b0eb212cc00f556c7204548118ececb69d3555f0a259bc0
+    REF mesa-21.3.3
+    SHA512 d64db47a4c1084d6c55b6959640043b51bd52e7ad0acc1daec5cc260bf2ab8a1286ead6956ded52da6d5adadf6818c3fa0deb861a5cde31bba206ee1bb35a509
     HEAD_REF master
     PATCHES ${PATCHES}
 ) 
@@ -121,7 +121,7 @@ list(APPEND MESA_OPTIONS -Dlibunwind=disabled)
 list(APPEND MESA_OPTIONS -Dlmsensors=disabled)
 list(APPEND MESA_OPTIONS -Dvalgrind=disabled)
 list(APPEND MESA_OPTIONS -Dglvnd=false)
-list(APPEND MESA_OPTIONS -Dglx=disabled)
+list(APPEND MESA_OPTIONS -Dglx=gallium-xlib) #gallium-xlib) # dri) # requires x11
 list(APPEND MESA_OPTIONS -Dgbm=disabled)
 list(APPEND MESA_OPTIONS -Dosmesa=true)
 
@@ -136,9 +136,12 @@ endif()
 string(APPEND GALLIUM_DRIVERS 'swrast')
 if("llvm" IN_LIST FEATURES)
     list(APPEND MESA_OPTIONS -Dllvm=enabled)
-    string(APPEND GALLIUM_DRIVERS ",'swr'") # SWR always requires llvm
+    #string(APPEND GALLIUM_DRIVERS ",'swr'") # SWR always requires llvm
 else()
     list(APPEND MESA_OPTIONS -Dllvm=disabled)
+endif()
+if(VCPKG_TARGET_IS_WINDOWS)
+ string(APPEND GALLIUM_DRIVERS ",'d3d12'")
 endif()
 
 list(APPEND MESA_OPTIONS -Dgallium-drivers=[${GALLIUM_DRIVERS}])
@@ -167,7 +170,7 @@ endif()
 list(APPEND MESA_OPTIONS -Dshared-glapi=enabled)  #shared GLAPI required when building two or more of the following APIs - opengl, gles1 gles2
 
 if(VCPKG_TARGET_IS_WINDOWS)
-    list(APPEND MESA_OPTIONS -Dplatforms=['windows'])
+    list(APPEND MESA_OPTIONS "-Dplatforms=['windows', 'x11']")
     list(APPEND MESA_OPTIONS -Dmicrosoft-clc=disabled)
 endif()
 

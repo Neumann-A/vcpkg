@@ -1,6 +1,6 @@
 {
   "name": "mesa",
-  "version": "21.2.5",
+  "version": "21.3.3",
   "description": "Mesa - The 3D Graphics Library",
   "homepage": "https://www.mesa3d.org/",
   "supports": "!(windows & arm)",
@@ -10,7 +10,8 @@
       "host": true
     },
     "zlib",
-    "zstd"
+    "zstd",
+    "directx-headers"
   ],
   "default-features": [
     "default-features"
