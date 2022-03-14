@@ -1,6 +1,6 @@
-set(GNUTLS_BRANCH 3.6)
-set(GNUTLS_VERSION ${GNUTLS_BRANCH}.15)
-set(GNUTLS_HASH f757d1532198f44bcad7b73856ce6a05bab43f6fb77fcc81c59607f146202f73023d0796d3e1e7471709cf792c8ee7d436e19407e0601bc0bda2f21512b3b01c)
+set(GNUTLS_BRANCH 3.7)
+set(GNUTLS_VERSION ${GNUTLS_BRANCH}.3)
+set(GNUTLS_HASH 3ace744affe23e284342658d6d2d2de49dd50065489cbc8be18fc7d38187253e5268ca54027ce5cd517056c249ac039a7481e4548cec04325de37ae85617d077)
 
 vcpkg_download_distfile(ARCHIVE
     URLS "https://www.gnupg.org/ftp/gcrypt/gnutls/v${GNUTLS_BRANCH}/gnutls-${GNUTLS_VERSION}.tar.xz"
@@ -24,8 +24,14 @@ if ("openssl" IN_LIST FEATURES)
   set(OPENSSL_COMPATIBILITY "--enable-openssl-compatibility")
 endif()
 
+#set(ENV{AUTOPOINT} "true")
+set(ENV{AUTOPOINT} "${CURRENT_HOST_INSTALLED_DIR}/tools/gettext/bin/autopoint")
+set(ENV{GTKDOCIZE} "true")
+
 vcpkg_configure_make(
     SOURCE_PATH "${SOURCE_PATH}"
+    #USE_WRAPPERS
+    AUTOCONFIG
     OPTIONS
         --disable-doc
         --disable-silent-rules
@@ -36,8 +42,10 @@ vcpkg_configure_make(
         --with-included-unistring
         --without-p11-kit
         --without-tpm
+        #ac_cv_header_sys_param_h=yes # Required
         ${OPENSSL_COMPATIBILITY}
         "LDFLAGS=${LDFLAGS}"
+    ADDITIONAL_MSYS_PACKAGES perl gettext
 )
 
 vcpkg_install_make()

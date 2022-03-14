@@ -1,7 +1,6 @@
 {
   "name": "libgnutls",
-  "version": "3.6.15",
-  "port-version": 2,
+  "version": "3.7.3",
   "description": "A secure communications library implementing the SSL, TLS and DTLS protocols",
   "homepage": "https://www.gnutls.org/",
   "supports": "!windows",
@@ -10,7 +9,15 @@
     "gmp",
     "libidn2",
     "libtasn1",
-    "nettle"
+    "nettle",
+    "dirent",
+    {
+          "name": "gettext",
+          "host": true,
+          "features": [
+            "tools"
+          ]                                                                        
+      }
   ],
   "features": {
     "openssl": {
