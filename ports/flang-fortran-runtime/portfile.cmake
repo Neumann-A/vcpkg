@@ -24,10 +24,10 @@ get_filename_component(PYTHON3_DIR "${PYTHON3}" DIRECTORY)
 vcpkg_add_to_path(${PYTHON3_DIR})
 
 if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
-    z_vcpkg_get_cmake_vars(cmake_vars_file)
+    vcpkg_cmake_get_vars(cmake_vars_file)
     include("${cmake_vars_file}")
-    get_filename_component(COMPILER_FILENAME "${VCPKG_DETECTED_CMAKE_C_COMPILER}" NAME)
-    if(COMPILER_FILENAME STREQUAL "cl.exe")
+
+    if(VCPKG_DETECTED_CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
         vcpkg_list(SET OPTIONS 
                     "-DCMAKE_C_COMPILER=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/vcpkg-tool-llvm/bin/clang-cl.exe"
                     "-DCMAKE_CXX_COMPILER=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/vcpkg-tool-llvm/bin/clang-cl.exe"
@@ -41,10 +41,13 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
             vcpkg_list(APPEND OPTIONS -DCMAKE_CROSSCOMPILING=ON -DCMAKE_SYSTEM_PROCESSOR:STRING=ARM64 -DCMAKE_SYSTEM_NAME:STRING=Windows -DCMAKE_Fortran_FLAGS=--target=aarch64-win32-msvc)
         endif()
     endif()
-    vcpkg_list(APPEND OPTIONS 
-                    "-DCMAKE_Fortran_COMPILER=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/bin/flang.exe"
-                    "-DCMAKE_Fortran_COMPILER_ID=Flang"
-              )
+    x_vcpkg_find_fortran(OUT_OPTIONS fortran_cmake 
+                     OUT_OPTIONS_RELEASE fortran_cmake_rel
+                     OUT_OPTIONS_DEBUG   fortran_cmake_dbg)
+    #vcpkg_list(APPEND OPTIONS 
+    #                "-DCMAKE_Fortran_COMPILER=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/bin/flang.exe"
+    #                "-DCMAKE_Fortran_COMPILER_ID=Flang"
+    #          )
 
     vcpkg_acquire_msys(MSYS_ROOT PACKAGES gawk bash sed)
     vcpkg_add_to_path("${MSYS_ROOT}/usr/bin")
@@ -66,10 +69,14 @@ vcpkg_cmake_configure(
         "-DLLVM_INCLUDE_TESTS=OFF"
         "-DFLANG_BUILD_TOOLS=OFF"
         "-DVCPKG_HOST_TRIPLET=${_HOST_TRIPLET}"
-        "-DLLVM_CONFIG=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/bin/llvm-config.exe"
-        "-DLLVM_CMAKE_PATH=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/lib/cmake/llvm" # Flang does not link against anything in llvm
-
+        #"-DLLVM_CONFIG=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/bin/llvm-config.exe"
+        #"-DLLVM_CMAKE_PATH=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/lib/cmake/llvm" # Flang does not link against anything in llvm
+        ${fortran_cmake}
         ${OPTIONS}
+    OPTIONS_RELEASE
+        ${fortran_cmake_rel}
+    OPTIONS_DEBUG
+        ${fortran_cmake_dbg}
 )
 vcpkg_cmake_install(ADD_BIN_TO_PATH)
 

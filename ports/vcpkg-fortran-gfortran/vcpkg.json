@@ -5,7 +5,6 @@
   "license": "MIT",
   "supports": "windows",
   "dependencies": [
-    "flang-fortran-runtime",
     {
         "name": "vcpkg-cmake",
         "host": true
