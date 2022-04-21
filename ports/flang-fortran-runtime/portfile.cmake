@@ -1,5 +1,18 @@
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY) # unresolved symbol interr
 
+
+vcpkg_download_distfile(
+    FLANG_LLVM_ARCHIVE
+    URLS https://github.com/flang-compiler/classic-flang-llvm-project/archive/refs/heads/release_13x.zip
+    FILENAME flang-llvm-13x.zip
+    SHA512 dc1cf27e77c02f24bba09dee6af71f4ee0037df68ebd1307550244aee58d200bb6b74bf90d9266abca7780be4c2266e35c5b7bf48c36cf09f7619118d77f8132
+)
+
+vcpkg_extract_source_archive_ex(
+    OUT_SOURCE_PATH SOURCE_LLVM
+    ARCHIVE ${FLANG_LLVM_ARCHIVE}
+)
+
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO  flang-compiler/flang
@@ -71,6 +84,21 @@ vcpkg_cmake_configure(
         "-DVCPKG_HOST_TRIPLET=${_HOST_TRIPLET}"
         #"-DLLVM_CONFIG=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/bin/llvm-config.exe"
         #"-DLLVM_CMAKE_PATH=${CURRENT_HOST_INSTALLED_DIR}/manual-tools/llvm-flang/lib/cmake/llvm" # Flang does not link against anything in llvm
+        "-DLLVM_TOOLS_BINARY_DIR=${CURRENT_INSTALLED_DIR}/bin"
+        "-DLLVM_LIBRARY_DIR=${CURRENT_INSTALLED_DIR}/lib"
+        "-DLLVM_MAIN_INCLUDE_DIR=${CURRENT_INSTALLED_DIR}/include/llvm"
+        "-DCMAKE_MODULE_PATH=${SOURCE_LLVM}/llvm/cmake/modules"
+        "-DLLVM_PACKAGE_VERSION=13.0.1"
+        "-DCMAKE_Fortran_PREPROCESS_SOURCE=<CMAKE_Fortran_COMPILER> -cpp <DEFINES> <INCLUDES> <FLAGS> -E -o <PREPROCESSED_SOURCE> <SOURCE>"
+        #"-DCMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_ON=-cpp"
+        #"-DCMAKE_Fortran_COMPILE_OPTIONS_PREPROCESS_OFF=-nocpp"
+        #"-DCMAKE_Fortran_SUBMODULE_SEP=@"
+        #"-DCMAKE_Fortran_SUBMODULE_EXT=.mod"
+        #"-DCMAKE_Fortran_FORMAT_FIXED_FLAG=-ffixed-form"
+        #"-DCMAKE_Fortran_FORMAT_FREE_FLAG=-ffree-form"
+        "-DCMAKE_INCLUDE_SYSTEM_FLAG_Fortran="
+        "-DCMAKE_Fortran_MODDIR_FLAG=-J"
+        "-DCMAKE_Fortran_POSTPROCESS_FLAG=-fpreprocessed"
         ${fortran_cmake}
         ${OPTIONS}
     OPTIONS_RELEASE

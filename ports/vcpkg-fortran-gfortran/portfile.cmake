@@ -7,6 +7,7 @@ endif()
 
 file(COPY
     "${CMAKE_CURRENT_LIST_DIR}/${FUNCTION_NAME}.cmake"
+    "${CMAKE_CURRENT_LIST_DIR}/windows_fortran_rules.cmake"
     "${CMAKE_CURRENT_LIST_DIR}/copyright"
     DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 

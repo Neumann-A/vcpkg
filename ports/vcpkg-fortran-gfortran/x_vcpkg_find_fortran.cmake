@@ -120,12 +120,21 @@ function(x_vcpkg_find_fortran)
             endif()
 
             set(mingw_bin "${msys_root}/${mingw_path}/bin")
-            #vcpkg_add_to_path(PREPEND "${mingw_bin}")
+            vcpkg_add_to_path("${mingw_bin}")
             vcpkg_list(APPEND additional_cmake_args
                 "-DCMAKE_C_COMPILER=${VCPKG_DETECTED_CMAKE_C_COMPILER}"
                 "-DCMAKE_CXX_COMPILER=${VCPKG_DETECTED_CMAKE_CXX_COMPILER}"
+                "-DCMAKE_AR=${VCPKG_DETECTED_CMAKE_AR}"
+                "-DCMAKE_LINKER=${VCPKG_DETECTED_CMAKE_LINKER}"
+                "-DCMAKE_MT=${VCPKG_DETECTED_CMAKE_MT}"
                 "-DCMAKE_Fortran_COMPILER=${mingw_bin}/gfortran.exe"
-                "-DCMAKE_Fortran_FLAGS_INIT:STRING= -mabi=ms -nodefaultlibs -mwin32 ${machine_flag} ${VCPKG_Fortran_FLAGS}")
+                "-DCMAKE_Fortran_FLAGS_INIT:STRING= -mabi=ms -nodefaultlibs -nostartfiles -mwin32 ${machine_flag} ${VCPKG_Fortran_FLAGS}"
+                "-DCMAKE_Fortran_COMPILER_WORKS=TRUE" # Force CMake a bit to not use the fortran compiler for linking
+                "-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY"
+                "-DCMAKE_SYSTEM_NAME=Windows"
+                "-DCMAKE_USER_MAKE_RULES_OVERRIDE_Fortran=${CURRENT_HOST_INSTALLED_DIR}/share/vcpkg-fortran-gfortran/windows_fortran_rules.cmake"
+                "-DTIME_FUNC=EXT_ETIME"
+                )
 
             # This is for private use by vcpkg-gfortran
             #set(vcpkg_find_fortran_MSYS_ROOT "${msys_root}" PARENT_SCOPE)

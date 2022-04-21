@@ -8,11 +8,11 @@
         <archiveName>python-3.10.2-embed-win32.zip</archiveName>
     </tool>
     <tool name="cmake" os="windows">
-        <version>3.22.2</version>
-        <exeRelativePath>cmake-3.22.2-windows-i386\bin\cmake.exe</exeRelativePath>
-        <url>https://github.com/Kitware/CMake/releases/download/v3.22.2/cmake-3.22.2-windows-i386.zip</url>
+        <version>3.23.1</version>
+        <exeRelativePath>cmake-3.23.1-windows-i386\bin\cmake.exe</exeRelativePath>
+        <url>https://github.com/Kitware/CMake/releases/download/v3.23.1/cmake-3.23.1-windows-i386.zip</url>
         <sha512>969d3d58d56d8fa3cc3acae2b949bf58abab945f70ae292ff20c9060d845dfc094c613c367a924abff47f307cc33af1467cdb9b75bb857868e38b2c7cdc72f79</sha512>
-        <archiveName>cmake-3.22.2-windows-i386.zip</archiveName>
+        <archiveName>cmake-3.23.1-windows-i386.zip</archiveName>
     </tool>
     <tool name="cmake" os="osx">
         <version>3.22.2</version>
