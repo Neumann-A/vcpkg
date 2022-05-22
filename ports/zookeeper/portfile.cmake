@@ -1,17 +1,14 @@
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
-vcpkg_download_distfile(ARCHIVE
-    URLS "https://archive.apache.org/dist/zookeeper/zookeeper-3.5.6/apache-zookeeper-3.5.6.tar.gz"
-    FILENAME "zookeeper-3.5.6.tar.gz"
-    SHA512 7f45817cbbc42aec5a7817fa2ae99656128e666dc58ace23d86bcfc5ca0dc49e418d1a7d1f082ad80ccb916f9f1b490167d16f836886af1a56fbcf720ad3b9d0
-)
-
-vcpkg_extract_source_archive_ex(
+vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    ARCHIVE ${ARCHIVE}
+    REPO apache/zookeeper
+    REF 5a02a05eddb59aee6ac762f7ea82e92a68eb9c0f
+    SHA512 309e78e1c7f10a487a8152e14e83fb1e7dfe875480c8740f04dd26d8a76d1d4826cc150b4f47e8d5a314627642df8a33cdfa7ff07c007a517650ed0459c94eac
+    HEAD_REF master
     PATCHES
-        cmake.patch
-        win32.patch
+        #cmake.patch
+        #win32.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS

@@ -1,9 +1,9 @@
 {
   "name": "zookeeper",
-  "version": "3.5.6",
+  "version": "3.8.0",
   "description": "ZooKeeper C bindings",
   "homepage": "https://github.com/apache/zookeeper",
-  "license": "BSD-3-Clause",
+  "license": "Apache-2.0",
   "dependencies": [
     {
       "name": "vcpkg-cmake",
