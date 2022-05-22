@@ -1,14 +1,14 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO FreeRDP/FreeRDP
-    REF 2.5.0
-    SHA512 7720306c8d0915578f6758f46ba0e0b8a81bbdcd1c80e08711576605142467f6735f644099e79a05113959fb30cd1070ca138a523537a41a7102880daf89c04c
+    REF 40ee5d3bcc70343af6c0300d71968858c1f1948f
+    SHA512 b18fa4830a6b4367e28e92fe91b9ae925d5d4fd517b2f6f8655eae7306f181b98e9e611c0cde576f642987c12af6eb862952179f5d7b60019cd7b024fd2db142
     HEAD_REF master
     PATCHES
         DontInstallSystemRuntimeLibs.patch
         fix-linux-build.patch
         openssl_threads.patch
-        fix-include-path.patch
+        #fix-include-path.patch
         fix-libusb.patch
         install-dirs.patch
 )
@@ -47,16 +47,7 @@ vcpkg_cmake_configure(
 vcpkg_cmake_install()
 vcpkg_copy_pdbs()
 
-file(GLOB_RECURSE TOOLS_RELEASE "${CURRENT_PACKAGES_DIR}/bin/*.exe")
-
-if(TOOLS_RELEASE)
-    file(COPY ${TOOLS_RELEASE} DESTINATION "${CURRENT_PACKAGES_DIR}/tools/${PORT}")
-
-    file(GLOB_RECURSE TOOLS_DEBUG "${CURRENT_PACKAGES_DIR}/debug/bin/*.exe")
-    file(REMOVE ${TOOLS_RELEASE} ${TOOLS_DEBUG})
-endif()
-
-vcpkg_copy_tool_dependencies("${CURRENT_PACKAGES_DIR}/tools/${PORT}")
+vcpkg_copy_tools(TOOL_NAMES wfreerdp winpr-hash winpr-makecert AUTO_CLEAN)
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
     file(GLOB_RECURSE FREERDP_DLLS "${CURRENT_PACKAGES_DIR}/lib/*.dll")
