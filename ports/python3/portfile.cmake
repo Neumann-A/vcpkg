@@ -11,6 +11,7 @@ set(PATCHES
     0009-python.pc.patch
     0010-bz2d.patch
     0011-fix-deps.patch
+    0012-clang-cl.patch
 )
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     list(PREPEND PATCHES 0001-static-library.patch)
