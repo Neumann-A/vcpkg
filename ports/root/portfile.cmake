@@ -8,10 +8,13 @@ vcpkg_from_github(
         fix_find_package.patch
         fix_afterimage_path.patch
 )
+
+vcpkg_add_to_path("${CURRENT_HOST_INSTALLED_DIR}/tools/python3")
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DVCPKG_HOST_TRIPLET=${_HOST_TRIPLET}
+        "-DPYTHON_EXECUTABLE=${CURRENT_HOST_INSTALLED_DIR}/tools/python3/python${VCPKG_HOST_EXECUTABLE_SUFFIX}"
 )
 
 vcpkg_cmake_install()

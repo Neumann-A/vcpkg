@@ -27,6 +27,11 @@
     "gsl",
     "glew",
     "libxml2",
+    "python3",
+    {
+        "name": "python3",
+        "host": true
+    },
     {
         "name": "pkgconf",
         "host": true
