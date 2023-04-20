@@ -6,6 +6,7 @@ vcpkg_from_github(
     HEAD_REF master
     PATCHES
         fix_find_package.patch
+        fix_afterimage_path.patch
 )
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"

@@ -41,6 +41,9 @@
     "sqlite3",
     "fftw3",
     "cfitsio",
-    "lapack"
+    "lapack",
+    "tbb",
+    "lz4",
+    "curl"
   ]
 }
