@@ -7,6 +7,7 @@ vcpkg_from_github(
     PATCHES
         fix_find_package.patch
         fix_afterimage_path.patch
+        fix-platform.patch
 )
 
 vcpkg_add_to_path("${CURRENT_HOST_INSTALLED_DIR}/tools/python3")
@@ -17,7 +18,7 @@ vcpkg_cmake_configure(
         "-DPYTHON_EXECUTABLE=${CURRENT_HOST_INSTALLED_DIR}/tools/python3/python${VCPKG_HOST_EXECUTABLE_SUFFIX}"
 )
 
-vcpkg_cmake_install()
+vcpkg_cmake_install(ADD_BIN_TO_PATH)
 vcpkg_cmake_config_fixup()
 vcpkg_fixup_pkgconfig()
 
