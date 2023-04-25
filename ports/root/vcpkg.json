@@ -28,6 +28,7 @@
     "glew",
     "libxml2",
     "python3",
+    "gtest",
     {
         "name": "python3",
         "host": true
