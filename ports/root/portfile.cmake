@@ -9,10 +9,10 @@ vcpkg_from_github(
         fix_ninja_msvc.diff
         more-patches.patch
         build-fixes.patch
+        ryml.patch
 )
 
-#string(APPEND VCPKG_C_FLAGS " -D__TBB_NO_IMPLICIT_LINKAGE=1")
-#string(APPEND VCPKG_CXX_FLAGS " -D__TBB_NO_IMPLICIT_LINKAGE=1")
+message(WARNING "Cling vendors llvm as such there might be similar exported symbols as llvm. If you use both with the MSBuild integration you are on your own!")
 
 vcpkg_find_acquire_program(GIT)
 cmake_path(GET GIT PARENT_PATH GIT_DIR)
@@ -27,8 +27,9 @@ vcpkg_cmake_configure(
         "-DPYTHON_EXECUTABLE=${CURRENT_HOST_INSTALLED_DIR}/tools/python3/python${VCPKG_HOST_EXECUTABLE_SUFFIX}"
         -Dbuiltin_tbb=OFF
         -Dbuiltin_gtest=OFF
+        -Dbuiltin_ftgl=OFF
         -DCMAKE_CXX_STANDARD=17
-        "-DLLVM_ENABLE_ASSERTIONS=on"
+        "-DLLVM_ENABLE_ASSERTIONS=on" # This list of settings are extracted from upstream CI with a few tweaks. 
         "-Dalien=off"
         "-Dall=off"
         "-Darrow=off"
@@ -99,7 +100,7 @@ vcpkg_cmake_configure(
         "-Doracle=off"
         "-Dpgsql=off"
         "-Dpyroot2=off"
-        "-Dpyroot3=off"
+        "-Dpyroot3=off" # requires numpy
         "-Dpyroot=off"
         "-Dpyroot_legacy=off"
         "-Dpythia6=off"
@@ -112,7 +113,7 @@ vcpkg_cmake_configure(
         "-Droofit_multiprocess=off"
         "-Droot7=on"
         "-Drootbench=off"
-        "-Droottest=on"
+        "-Droottest=off" # build roottest
         "-Drpath=on"
         "-Druntime_cxxmodules=off"
         "-Dshadowpw=off"
@@ -124,7 +125,7 @@ vcpkg_cmake_configure(
         "-Dtcmalloc=off"
         "-Dtest_distrdf_dask=off"
         "-Dtest_distrdf_pyspark=off"
-        "-Dtesting=on"
+        "-Dtesting=off" # build tests
         "-Dtmva-cpu=on"
         "-Dtmva-gpu=off"
         "-Dtmva-pymva=on"
@@ -148,11 +149,39 @@ vcpkg_cmake_configure(
 )
 
 vcpkg_cmake_install(ADD_BIN_TO_PATH)
-vcpkg_cmake_config_fixup()
+vcpkg_cmake_config_fixup(CONFIG_PATH cmake)
 vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE
         "${CURRENT_PACKAGES_DIR}/debug/include"
         "${CURRENT_PACKAGES_DIR}/debug/share")
 
-vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LGPL2_1.txt")
+vcpkg_copy_tools(
+  TOOL_NAMES
+    bindexplib
+    genreflex
+    hadd
+    proofserv
+    rmkdepend
+    root
+    rootcint
+    rootcling
+    rootnb
+    rootreadspeed
+  AUTO_CLEAN)
+  
+vcpkg_install_copyright(FILE_LIST "${CURRENT_PACKAGES_DIR}/LICENSE")
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/LICENSE"
+                    "${CURRENT_PACKAGES_DIR}/bin/__pycache__"
+                    "${CURRENT_PACKAGES_DIR}/geom/gdml/doc")
+
+# I don't actually know if this breaks stuff in root.
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/bin/root-config" "${SOURCE_PATH}" "")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/bin/root-config" "${CURRENT_PACKAGES_DIR}/lib" "\${libdir}")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/bin/root-config" "${CURRENT_INSTALLED_DIR}/lib" "\${libdir}")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/bin/root-config" "${CURRENT_INSTALLED_DIR}/include" "\${incdir}")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/etc/notebook/jupyter_notebook_config.py" "${CURRENT_PACKAGES_DIR}" "os.path.dirname(__file__)+'/../../'")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/compiledata.h" "-I${SOURCE_PATH}" "")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/RConfigOptions.h" "${CURRENT_INSTALLED_DIR}/lib" "")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/RConfigOptions.h" "${CURRENT_INSTALLED_DIR}/include" "")

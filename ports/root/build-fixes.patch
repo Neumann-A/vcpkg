@@ -11,7 +11,7 @@ index 6f7b06830..0aa4ff7b6 100644
  if(WIN32)
    add_custom_command(OUTPUT tutorials/hsimple.root
 -                     COMMAND set PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY} &&
-+                     COMMAND set "PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY};$ENV{PATH}" &&
++                     COMMAND set "PATH=${CMAKE_RUNTIME_OUTPUT_DIRECTORY};%PATH%" &&
                               set ROOTIGNOREPREFIX=1 && set ROOT_HIST=0 &&
                               $<TARGET_FILE:root.exe> -l -q -b -n -x hsimple.C -e return
                       WORKING_DIRECTORY tutorials
