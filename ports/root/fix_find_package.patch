@@ -6,13 +6,13 @@ index 66923cfc9..e85d9295c 100644
  
  include(cmake/modules/CaptureCommandLine.cmake)
  
-+macro(find_package)
+ project(ROOT)
++macro(_find_package)
 +  if(NOT "${ARGV0}" IN_LIST ROOT_BUILTINS)
-+    _find_package(${ARGV})
++    __find_package(${ARGV})
 +  endif()
 +endmacro()
 +
- project(ROOT)
  
  #---Set the locale to default C to prevent issued due to localization of commands---------------
 diff --git a/cmake/modules/SearchInstalledSoftware.cmake b/cmake/modules/SearchInstalledSoftware.cmake

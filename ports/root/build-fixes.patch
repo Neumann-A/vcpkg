@@ -62,10 +62,13 @@ index c6dc439ba..3ea0b6aca 100644
      set(CMAKE_REQUIRED_INCLUDES "${TBB_INCLUDE_DIRS}")
      check_cxx_source_compiles("
  #include <tbb/tbb_config.h>
-@@ -1330,6 +1330,10 @@ int main() { return 0; }" tbb_exception_result)
+@@ -1330,6 +1330,13 @@ int main() { return 0; }" tbb_exception_result)
    endif()
  
-   set(TBB_CXXFLAGS "-DTBB_SUPPRESS_DEPRECATED_MESSAGES=1")
+  set(TBB_CXXFLAGS "-DTBB_SUPPRESS_DEPRECATED_MESSAGES=1")
++  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
++    string(APPEND TBB_CXXFLAGS " -D_DEBUG=1")
++  endif()
 +  set(TBB_TARGET TBB::tbb)
 +  set(TBB_INCLUDE_DIRS "${VCPKG_INSTALLED_DIR}/include")
 +  set(TBB_LIBRARIES "${TBB_TARGET}")

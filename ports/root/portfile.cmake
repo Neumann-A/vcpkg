@@ -10,9 +10,13 @@ vcpkg_from_github(
         more-patches.patch
         build-fixes.patch
         ryml.patch
+        fix-curl-linkage.patch
 )
 
 message(WARNING "Cling vendors llvm as such there might be similar exported symbols as llvm. If you use both with the MSBuild integration you are on your own!")
+
+#string(APPEND VCPKG_C_FLAGS_DEBUG "-D__TBB_NO_IMPLICIT_LINKAGE=1") # This requires otherwise _DEBUG to be set correctly. Should maybe be guarded with TBB_USE_DEBUG in the tbb headers instead. 
+#string(APPEND VCPKG_CXX_FLAGS_DEBUG "-D__TBB_NO_IMPLICIT_LINKAGE=1")
 
 vcpkg_find_acquire_program(GIT)
 cmake_path(GET GIT PARENT_PATH GIT_DIR)
@@ -140,12 +144,15 @@ vcpkg_cmake_configure(
         "-Dvecgeom=off"
         "-Dwebgui=on"
         "-Dwin_broken_tests=off"
-        "-Dwinrtdebug=off"
         "-Dx11=off"
         "-Dxml=off"
         "-Dxproofd=off"
         "-Dxrootd=off"
-        #--trace-expand
+        ##--trace-expand
+    OPTIONS_RELEASE
+        "-Dwinrtdebug=off"
+    OPTIONS_DEBUG
+        "-Dwinrtdebug=on"
 )
 
 vcpkg_cmake_install(ADD_BIN_TO_PATH)
