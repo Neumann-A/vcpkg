@@ -7,12 +7,13 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxdmcp
-    REF 618b3ba5f826d930df2ca6a6a0ce212fa75cef42 # 1.1.3
-    SHA512  f8b035fa95f6948cc6bac69bfcc33498cd65db73c62aadee714bce371d61c50f283c45d1a3f43397a96b3c956b41dfe94355e94e33764760b29bf98ba8dfebe2
+    REF libXdmcp-${VERSION}
+    SHA512  e56baff7e7556954e10d1702b469c42fccae218692a9379306b08b513a7453d504dcbd39d03acdfe23f8f9f3f7b0fec5ae517ce17f3aa0fd5f1947d04cb73663
     HEAD_REF master
     PATCHES configure.ac.patch
-) 
+)
 
+file(MAKE_DIRECTORY "${SOURCE_PATH}/m4")
 set(ENV{ACLOCAL} "aclocal -I \"${CURRENT_INSTALLED_DIR}/share/xorg/aclocal/\"")
 if(VCPKG_TARGET_IS_WINDOWS)
     set(OPTIONS --disable-dependency-tracking)

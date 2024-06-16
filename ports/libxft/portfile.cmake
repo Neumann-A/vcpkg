@@ -7,8 +7,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxft
-    REF 98b121f22c3477b508dd17aa5db99f2ebf36ade4 # 2.3.4
-    SHA512  336d80b96b607b3f694a8dac1e2c3cb7f22640ee6f2eeb9d6f8b7b0ddabc3fe9a096f0108595657ddff2f5b2b720a12d8954497067b1339878e786f7470c5617
+    REF libXft-${VERSION}
+    SHA512  0
     HEAD_REF master
 ) 
 

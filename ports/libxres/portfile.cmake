@@ -6,8 +6,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxres
-    REF c05c6d918b0e2011d4bfa370c321482e34630b17 # 1.2.1
-    SHA512  c2eabf65b03393991b56b84bea4d770e9c0295d685e8b22bb7dabbd37dd6c7c6f5e519cefa790b05c0f124bb739a5abe03249b89e2ce6d5276014e9752c11251
+    REF libXres-${VERSION}
+    SHA512  7cd47e961b58e0a7f2f1a60788848d68daa1079da28ae137db67a5a54e48eafc53fc54a2a4c0bb77bd22a524a70e1ccc876affd2585f775e714274574eea782f
     HEAD_REF master
     PATCHES build.patch
 ) 

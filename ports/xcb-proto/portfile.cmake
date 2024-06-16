@@ -24,8 +24,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO proto/xcbproto
-    REF  70ca65fa35c3760661b090bc4b2601daa7a099b8 #v1.14.1 + patches
-    SHA512   9e08e1d2ab1fe7a8d3985568918a858ddfb31b8016ccac8ea2447631e7cede3bcc7b1ed86491d497ab871674c9b55d94fab25ee13ff6de9a44590b91d9166fda
+    REF  xcb-proto-${VERSION}
+    SHA512   69ac318e19c6a08d50624867b44f43c7cab7eb8e610635376b91b1b15c19a681bef246254565b920a26166726d501a2042fdc52c5ba37a509814cd5c766211e4
     HEAD_REF master
 ) 
 
@@ -41,6 +41,9 @@ vcpkg_configure_make(
         )
 
 vcpkg_install_make()
+file(MAKE_DIRECTORY "${CURRENT_PACKAGES_DIR}/share/pkgconfig")
+ file(RENAME "${CURRENT_PACKAGES_DIR}/share/xcb-proto/pkgconfig/xcb-proto.pc" "${CURRENT_PACKAGES_DIR}/share/pkgconfig/xcb-proto.pc")
+ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/share/xcb-proto/pkgconfig/")
 vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")

@@ -7,8 +7,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxcomposite
-    REF fd7d02cc014ac9bf5bb7e68b66102ea36a76a59a # 0.4.5
-    SHA512  68ee9d61d364816bf190db010f624312e9daf8d6b411dc209486ac0c7d92b3c75ca5a2650bc085b0c444bec1adfefca593e1d9e6fda4ba12ab5f12ebe7fd6ade
+    REF libXcomposite-${VERSION}
+    SHA512  5c9ce823ca338b63b9e1938b6528ffd4b3d9048543bdd439086914f05ecbcf4cf099157530d5f65155f08d924fe71403946e6610bf0a0b03d2afc38f126a434d
     HEAD_REF master
 ) 
 

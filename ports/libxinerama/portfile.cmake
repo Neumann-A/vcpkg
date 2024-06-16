@@ -7,8 +7,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxinerama
-    REF  c3ab2361f13154921df2992f9eacc1ea1b3f946b #1.1.4
-    SHA512  c65ed77d370e063f861ff9ed3abee5ad89be9ba452de987263da702985b1aa5be2ddd464e67b7978155e072e67f03ef49192a87fa707fcead408434e1771cbc0
+    REF  libXinerama-${VERSION}
+    SHA512  0
     HEAD_REF master
 ) 
 

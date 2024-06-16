@@ -11,16 +11,16 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libx11
-    REF  3a30ada60c5217ada37b143b541c8e6f6284c7fa
-    SHA512 441f86ff8293d27459feaa93f85bcd4d02c6bd64fdb4d95199e5ee8a75340c2ce9b0fccd0b05840ce0de30ff3af3d21e6f37c81840e82b37dbddf082911b585d
+    REF  a465588218c1643eedc35b3c24409cb775454eee
+    SHA512 75f862b90100ee579fb8c6174544d2c6a6b6a9bd15b36168417e64f508814c6a3746962c824c1a4331d8059bd130493330c72ce7a10a12b81fa5a1d07aab22b8
     HEAD_REF master
     PATCHES
         optimize-configure.patch
         cl.build.patch
         io_include.patch
         ${PATCHES}
-        vcxserver.patch
-        add_dl_pc.patch
+        #vcxserver.patch
+        #add_dl_pc.patch
 ) 
 
 set(ENV{ACLOCAL} "aclocal -I \"${CURRENT_INSTALLED_DIR}/share/xorg/aclocal/\"")
@@ -70,9 +70,9 @@ vcpkg_configure_make(
 
 if(VCPKG_CROSSCOMPILING)
     file(GLOB FOR_BUILD_FILES "${CURRENT_HOST_INSTALLED_DIR}/manual-tools/${PORT}/*")
-    file(COPY ${FOR_BUILD_FILES} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util")
+    file(COPY ${FOR_BUILD_FILES} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util" USE_SOURCE_PERMISSIONS)
     if(NOT VCPKG_BUILD_TYPE)
-        file(COPY ${FOR_BUILD_FILES} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/src/util")
+        file(COPY ${FOR_BUILD_FILES} DESTINATION "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-dbg/src/util" USE_SOURCE_PERMISSIONS)
     endif()
 endif()
 vcpkg_install_make()
@@ -92,8 +92,8 @@ if(NOT VCPKG_CROSSCOMPILING)
     file(READ "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/config.log" config_contents)
     string(REGEX MATCH "ac_cv_objext=[^\n]+" objsuffix "${config_contents}")
     string(REPLACE "ac_cv_objext=" "." objsuffix "${objsuffix}")
-    file(INSTALL "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util/makekeys${VCPKG_TARGET_EXECUTABLE_SUFFIX}" DESTINATION "${CURRENT_PACKAGES_DIR}/manual-tools/${PORT}")
-    file(INSTALL "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util/makekeys${objsuffix}" DESTINATION "${CURRENT_PACKAGES_DIR}/manual-tools/${PORT}")
+    file(INSTALL "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util/makekeys${VCPKG_TARGET_EXECUTABLE_SUFFIX}" DESTINATION "${CURRENT_PACKAGES_DIR}/manual-tools/${PORT}" USE_SOURCE_PERMISSIONS)
+    file(INSTALL "${CURRENT_BUILDTREES_DIR}/${TARGET_TRIPLET}-rel/src/util/makekeys${objsuffix}" DESTINATION "${CURRENT_PACKAGES_DIR}/manual-tools/${PORT}" USE_SOURCE_PERMISSIONS)
 endif()
 
 endif()

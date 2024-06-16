@@ -6,9 +6,9 @@ else()
 vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO lib/libxext
-    REF ebb167f34a3514783966775fb12573c4ed209625 # 1.3.4
-    SHA512  509cb67ad9dba37adbcc49dca6e9803b318f62e8e2b981ccf73ce328a8104e94615312c5914b480ba04e28d208cd93d8a71b3e6e2ef1a4e5615aa2a3f9ba19e7
+    REPO lib/libXext
+    REF libXext-${VERSION}
+    SHA512  061403d0e244d944799a621d5e497da894667aa470bf68fe1734a64ee579a14b70c8a290468a4904110dba5b9172883ae87a6f5cd4dd545e3178e43128c191a4
     HEAD_REF master
 ) 
 

@@ -1,0 +1,33 @@
+diff --git a/src/corelib/kernel/qfunctions_vxworks.h b/src/corelib/kernel/qfunctions_vxworks.h
+index 94aa5c87b5..03838be986 100644
+--- a/src/corelib/kernel/qfunctions_vxworks.h
++++ b/src/corelib/kernel/qfunctions_vxworks.h
+@@ -26,6 +26,7 @@
+ #include <sys/stat.h>
+ #include <sys/wait.h>
+ #include <netinet/in.h>
++#include <grp.h>
+ 
+ // VxWorks has public header mbuf.h which defines following variables for DKM.
+ // Let's undef those to because they overlap with Qt variable names-
+@@ -125,12 +126,14 @@ uid_t getuid();
+ gid_t getgid();
+ uid_t geteuid();
+ 
+-struct group {
+-    char   *gr_name;       /* group name */
+-    char   *gr_passwd;     /* group password */
+-    gid_t   gr_gid;        /* group ID */
+-    char  **gr_mem;        /* group members */
+-};
++#if !defined(group)
++//struct group {
++//    char   *gr_name;       /* group name */
++//    char   *gr_passwd;     /* group password */
++//    gid_t   gr_gid;        /* group ID */
++//    char  **gr_mem;        /* group members */
++//};
++#endif
+ 
+ struct group *getgrgid(gid_t gid);
+ 

@@ -6,9 +6,9 @@ else()
 vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO lib/libxrender
-    REF  845716f8f14963d338e5a8d5d2424baafc90fb30 # 0.9.10
-    SHA512  a7e8d383a8400d63eb726b741cd25a1e9e671c7eadef04beddc4e31fec59b384ae4fa3f305e62a2aecbaedffc76c7b0626f525ec8634c9940a29de058e4a653c
+    REPO lib/libXrender
+    REF  libXrender-${VERSION}
+    SHA512  0
     HEAD_REF master
 )
 

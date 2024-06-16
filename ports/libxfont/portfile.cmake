@@ -7,8 +7,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxfont
-    REF 3a4f68284c5aeea77789af1fe395cac35efc8562 # 2.0.5
-    SHA512  d9731b50a55c3bceadb0abb4530a673940432467402829559229cfa946105270970db0b7663b72e64279b4b6f8a82b594549d8987205e581de19e55710fec15f
+    REF libXfont2-${VERSION}
+    SHA512  6416ee84ea1de10ee6c22644d811a1079d3690b07414b090806f2c79069032d33452ca1a772edf3889d09a73c8efe743ddd7124b9513636217e377b33a1c47fc
     HEAD_REF master
     PATCHES build.patch
             build2.patch

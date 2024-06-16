@@ -1,6 +1,6 @@
 {
   "name": "xproto",
-  "version": "2021.5",
+  "version": "2024.1",
   "description": "X Window System unified protocol definitions",
   "homepage": "https://gitlab.freedesktop.org/xorg/proto/xorgproto",
   "license": null,

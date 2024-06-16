@@ -64,18 +64,15 @@ if(_PythonFinder_WantLibs)
         )
     endif()
 
-    # These are duplicated as normal variables to nullify FindPython's checksum verifications.
-    set(_@PythonFinder_PREFIX@_INCLUDE_DIR "${_@PythonFinder_PREFIX@_INCLUDE_DIR}")
-    set(_@PythonFinder_PREFIX@_LIBRARY_RELEASE "${_@PythonFinder_PREFIX@_LIBRARY_RELEASE}")
-    set(_@PythonFinder_PREFIX@_LIBRARY_DEBUG "${_@PythonFinder_PREFIX@_LIBRARY_DEBUG}")
-
     _find_package(${ARGS})
 
     if(@VCPKG_LIBRARY_LINKAGE@ STREQUAL static)
+        include(CMakeFindDependencyMacro)
+
         # Python for Windows embeds the zlib module into the core, so we have to link against it.
         # This is a separate extension module on Unix-like platforms.
         if(WIN32)
-            find_package(ZLIB)
+            find_dependency(ZLIB)
             if(TARGET @PythonFinder_PREFIX@::Python)
                 set_property(TARGET @PythonFinder_PREFIX@::Python APPEND PROPERTY INTERFACE_LINK_LIBRARIES ZLIB::ZLIB)
             endif()
@@ -88,8 +85,8 @@ if(_PythonFinder_WantLibs)
         endif()
 
         if(APPLE)
-            find_package(Iconv)
-            find_package(Intl)
+            find_dependency(Iconv)
+            find_dependency(Intl)
             if(TARGET @PythonFinder_PREFIX@::Python)
                 get_target_property(_PYTHON_INTERFACE_LIBS @PythonFinder_PREFIX@::Python INTERFACE_LINK_LIBRARIES)
                 if(NOT _PYTHON_INTERFACE_LIBS)
@@ -123,13 +120,6 @@ if(_PythonFinder_WantLibs)
     endif()
 else()
     _find_package(${ARGS})
-endif()
-
-if(TARGET @PythonFinder_PREFIX@::Python)
-    target_compile_definitions(@PythonFinder_PREFIX@::Python INTERFACE "$<$<CONFIG:Debug>:Py_DEBUG>")
-endif()
-if(TARGET @PythonFinder_PREFIX@::Module)
-    target_compile_definitions(@PythonFinder_PREFIX@::Module INTERFACE "$<$<CONFIG:Debug>:Py_DEBUG>")
 endif()
 
 unset(_PythonFinder_WantInterp)

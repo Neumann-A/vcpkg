@@ -7,8 +7,8 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxscrnsaver
-    REF 96fffcd9dcaf2ba37ec56aa798677de9ad58ae81 # 1.2.3 
-    SHA512  56ae74721db0c9970001b74227eadfe116d6cbfbb8dc318a4799f5034e0028572d5cc7acedbfb1b812a37bfc8cf21d35b62b264be08b17c695878c37d56bf9a2
+    REF libXScrnSaver-${VERSION}
+    SHA512  129ef234182b3694cedc9687f5e909ca3f50fc9ac0dd99b9d721878ca5760ad04a75d2a7f338087bd949970da4a6b2b274eac30304e6d8c5ebfe40c9c96eb56a
     HEAD_REF master
 ) 
 

@@ -6,11 +6,11 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxfixes
-    REF 6fe3bd64dd82f704ed91478acb4c99ab5c00be16 # 6.0.0
-    SHA512  429e65f4183d92cee1380273a23be9bf157bdd19e01e164d8b9058a2a54601af8f4556888302a2cad062c2cfc4b3a37d6b8f5b7ac6bdd6b5c069c7b791422201
+    REF libXfixes-${VERSION}
+    SHA512  da26ea046fcd02ac2d7b5ed999b2841e58bb5b849e4a5822851cc7820c742aa7863983dbae4b52942c171ac21fd47e4912ece73401ef5ef8a0d8dea52616d6f2
     HEAD_REF master
 ) 
-
+file(MAKE_DIRECTORY "${SOURCE_PATH}/m4")
 set(ENV{ACLOCAL} "aclocal -I \"${CURRENT_INSTALLED_DIR}/share/xorg/aclocal/\"")
 
 vcpkg_configure_make(

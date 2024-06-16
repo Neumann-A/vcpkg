@@ -13,8 +13,8 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO xkbcommon/libxkbcommon
-    REF 57af9cb71f19f37394399b549f7cb7b0d9fe3988 # v 1.4.1
-    SHA512  0f1ecdf12c3cc6ff547a9cf42aa8ce1c63acbf2f6fb766899e5e8dbda401e25dd8137c2f59a04dadd445b4873bb80b8ae8b23f88140e5a318186c308a65921f5
+    REF xkbcommon-${VERSION}
+    SHA512  0
     HEAD_REF master
     PATCHES ${PATCHES}
 )

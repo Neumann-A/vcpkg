@@ -7,9 +7,9 @@ vcpkg_from_gitlab(
     GITLAB_URL https://gitlab.freedesktop.org/xorg
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxdamage
-    REF 977b04cd69738806e0b48fcf5c725763d065f06d # 1.1.5
-    SHA512  79c3a4c63f6c50c39d324183b98ad7e70235aed1c8385acf2f593739c71e7929119448be3e15dffd276b32e4fbb056508deeb35f450f74b85c101047f68d4339
-    HEAD_REF master # branch name
+    REF libXdamage-${VERSION}
+    SHA512  c5fab96b0a15e9298d6f007d1f4ed9f7719c003530adb4c85c729447c2693780a60d68e4b9d6cb7151766bfabe9eef2997272030e187b8d5162027c39bc72c24
+    HEAD_REF master
 ) 
 
 set(ENV{ACLOCAL} "aclocal -I \"${CURRENT_INSTALLED_DIR}/share/xorg/aclocal/\"")

@@ -15,8 +15,7 @@
       "name": "vcpkg-tool-meson",
       "host": true
     },
-    "zlib",
-    "zstd"
+    "zlib"
   ],
   "default-features": [
     "default-features"
@@ -64,38 +63,6 @@
     "llvm": {
       "description": "Build with llvmpipe",
       "dependencies": [
-        {
-          "name": "llvm",
-          "default-features": false,
-          "features": [
-            "enable-rtti",
-            "libclc"
-          ]
-        },
-        {
-          "name": "llvm",
-          "default-features": false,
-          "features": [
-            "target-arm"
-          ],
-          "platform": "arm32"
-        },
-        {
-          "name": "llvm",
-          "default-features": false,
-          "features": [
-            "target-aarch64"
-          ],
-          "platform": "arm64"
-        },
-        {
-          "name": "llvm",
-          "default-features": false,
-          "features": [
-            "target-x86"
-          ],
-          "platform": "x64 | x86"
-        }
       ]
     },
     "offscreen": {
