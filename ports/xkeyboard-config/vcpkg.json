@@ -1,0 +1,14 @@
+{
+  "name": "xkeyboard-config",
+  "version": "2.34",
+  "description": "X Keyboard Extension",
+  "homepage": "https://gitlab.freedesktop.org/xkeyboard-config/xkeyboard-config",
+  "dependencies": [
+    "libx11",
+    "libxkbcommon",
+    "libxslt",
+    { "name": "vcpkg-tool-meson",
+      "host": true
+    }
+  ]
+}

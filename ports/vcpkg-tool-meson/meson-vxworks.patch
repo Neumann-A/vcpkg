@@ -1,0 +1,22 @@
+diff --git a/ mesonbuild/linkers/detect.py b/ mesonbuild/linkers/detect.py
+index 06d3cd3..7b4dcc9 100644
+--- a/ mesonbuild/linkers/detect.py	
++++ b/ mesonbuild/linkers/detect.py
+@@ -23,6 +23,7 @@ from ..mesonlib import (
+ import re
+ import shlex
+ import typing as T
++import tempfile
+ 
+ if T.TYPE_CHECKING:
+     from .linkers import DynamicLinker, GnuDynamicLinker
+@@ -145,7 +146,8 @@ def guess_nix_linker(env: 'Environment', compiler: T.List[str], comp_class: T.Ty
+         check_args += override
+ 
+     mlog.debug('-----')
+-    p, o, e = Popen_safe_logged(compiler + check_args, msg='Detecting linker via')
++    with tempfile.NamedTemporaryFile(suffix='.c') as f:
++        p, o, e = Popen_safe_logged(compiler + check_args + [f.name], msg='Detecting linker via')
+ 
+     v = search_version(o + e)
+     linker: DynamicLinker

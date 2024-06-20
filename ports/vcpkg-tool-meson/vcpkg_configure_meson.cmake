@@ -253,7 +253,8 @@ function(z_vcpkg_get_build_and_host_system build_system host_system is_cross) #h
 
     if(NOT build_cpu_fam MATCHES "${host_cpu_fam}"
        OR VCPKG_TARGET_IS_ANDROID OR VCPKG_TARGET_IS_IOS OR VCPKG_TARGET_IS_UWP
-       OR (VCPKG_TARGET_IS_MINGW AND NOT WIN32))
+       OR (VCPKG_TARGET_IS_MINGW AND NOT WIN32)
+       OR VCPKG_MESON_FORCE_CROSS)
         set(${is_cross} TRUE PARENT_SCOPE)
     endif()
 endfunction()

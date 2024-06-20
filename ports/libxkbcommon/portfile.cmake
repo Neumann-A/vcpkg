@@ -14,7 +14,7 @@ vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO xkbcommon/libxkbcommon
     REF xkbcommon-${VERSION}
-    SHA512  0
+    SHA512  454fbb2861405ca957d64035e924c1bbb7d43db7867903963fc053b7ecb64a8fba89a21cc8ac18ebeec9b61ae0789fb88c52521a850dc371857f28b08e80167b
     HEAD_REF master
     PATCHES ${PATCHES}
 )

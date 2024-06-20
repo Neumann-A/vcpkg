@@ -1,0 +1,23 @@
+diff --git a/include/X11/Xos.h b/include/X11/Xos.h
+index 75cc5b7f21..b0fd3ce507 100644
+--- a/include/X11/Xos.h
++++ b/include/X11/Xos.h
+@@ -60,7 +60,7 @@ in this Software without prior written authorization from The Open Group.
+  */
+ 
+ # include <string.h>
+-# if defined(__SCO__) || defined(__UNIXWARE__) || defined(__sun) || defined(__CYGWIN__) || defined(_AIX) || defined(__APPLE__) || defined(__FreeBSD__)
++# if defined(__SCO__) || defined(__UNIXWARE__) || defined(__sun) || defined(__CYGWIN__) || defined(_AIX) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__VXWORKS__)
+ #  include <strings.h>
+ # else
+ #  ifndef index
+diff --git a/xproto.pc.in b/xproto.pc.in
+index 9e288c717b..081c0ca024 100644
+--- a/xproto.pc.in
++++ b/xproto.pc.in
+@@ -5,4 +5,4 @@ includex11dir=@includedir@/X11
+ Name: Xproto
+ Description: Xproto headers
+ Version: 7.0.33
+-Cflags: -I${includedir}
++Cflags: -I${includedir} -D_XOPEN_SOURCE=7033

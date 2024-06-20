@@ -23,6 +23,7 @@ vcpkg_from_gitlab(
     HEAD_REF master
     PATCHES 
         ${PATCHES}
+        fix-vxworks.patch
 )
 
 vcpkg_configure_meson(SOURCE_PATH "${SOURCE_PATH}"

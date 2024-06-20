@@ -15,12 +15,13 @@ vcpkg_from_gitlab(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO lib/libxkbfile
     REF  libxkbfile-${VERSION}
-    SHA512 0
+    SHA512 e4b0fc6d9525669fe85cd8ebb096ce4a9355de00e7356dbe6c3cb194f6aa2449ef345811ce4934bb8c09edb94eee08227f7f20ee1df4a8a49697a3dc85cd704e
     HEAD_REF master
     PATCHES fix_u_char.patch 
             ${PATCHES}
 ) 
 
+file(MAKE_DIRECTORY "${SOURCE_PATH}/m4")
 set(ENV{ACLOCAL} "aclocal -I \"${CURRENT_INSTALLED_DIR}/share/xorg/aclocal/\"")
 
 vcpkg_configure_make(

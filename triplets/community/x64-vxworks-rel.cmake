@@ -18,11 +18,27 @@ set(VCPKG_CMAKE_CONFIGURE_OPTIONS "-DQT_QMAKE_TARGET_MKSPEC=vxworks-clang")
 
 set(VCPKG_CONFIGURE_MAKE_OPTIONS "--enable-malloc0returnsnull=yes")
 if(PORT STREQUAL "xcb")
-  list(APPEND VCPKG_CONFIGURE_MAKE_OPTIONS "ac_cv_search_sendmsg=no")
+  list(APPEND VCPKG_CONFIGURE_MAKE_OPTIONS "ac_cv_search_sendmsg=no") # Missing CMSG_LEN; SCM_RIGHTS CMSG_SPACE; CMSG_ALIGN
 endif() 
 if(PORT STREQUAL "libx11")
   list(APPEND VCPKG_CONFIGURE_MAKE_OPTIONS "ac_cv_member_struct_sockaddr_in_sin_len=no")
 endif() 
+if(PORT STREQUAL "gmp")
+  list(APPEND VCPKG_CONFIGURE_MAKE_OPTIONS 
+    "ac_cv_sizeof_mp_limb_t=8"
+    "ac_cv_sizeof_unsigned_long=8"
+    "ac_cv_sizeof_void_p=8"
+    "ac_cv_sizeof_unsigned=4"
+    "ac_cv_sizeof_unsigned_short=2"
+  )
+  set(ENV{CFLAGS} "-D_ALLOW_KEYWORD_MACROS")
+endif()
+if(PORT STREQUAL "libdrm")
+  set(ENV{CFLAGS} "__linux__")
+endif()
+
+# editted __vx/bsdstring.h / string.h needed for libxfont using strlcpy
+
 set(ENV{CC} "wr-cc")
 set(ENV{CXX} "wr-c++")
 set(ENV{CPP} "wr-cpp")

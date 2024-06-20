@@ -1,0 +1,11 @@
+{
+  "name": "xkbcomp",
+  "version": "1.4.7",
+  "description": "XKB keyboard description compiler",
+  "homepage": "https://gitlab.freedesktop.org/xorg/app/xkbcomp",
+  "dependencies": [
+    "libx11",
+    "libxkbfile",
+    "xproto"
+  ]
+}

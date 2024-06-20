@@ -61,7 +61,7 @@ if(EXISTS "${pcfile}")
     vcpkg_replace_string("${pcfile}" "Requires: " "Requires: xau xdmcp ")
 endif()
 
-vcpkg_fixup_pkgconfig()
+vcpkg_fixup_pkgconfig(SKIP_CHECK)
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")

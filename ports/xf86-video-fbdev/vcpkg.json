@@ -1,0 +1,15 @@
+{
+  "name": "xf86-video-fbdev",
+  "version-string": "0.5",
+  "description": "framebuffer device video driver for the Xorg X server",
+  "homepage": "https://xcb.freedesktop.org/",
+  "dependencies": [
+    {
+      "name": "xserver",
+      "default-features": false,
+      "features": [
+        "xorg"
+      ]
+    }
+  ]
+}
